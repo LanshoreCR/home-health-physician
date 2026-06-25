@@ -1,0 +1,59 @@
+/* ──────────────────────────────────────────────────────────────────────────
+   Colors — Physician Add Tool design system
+   A calm, trustworthy healthcare back-office palette: blue primary,
+   slate neutrals, and a five-state status spectrum for the request lifecycle.
+   ────────────────────────────────────────────────────────────────────────── */
+:root {
+  /* ── Brand / primary (action blue) ── */
+  --blue-50:  #eaf1fe;
+  --blue-100: #dbe5f5;
+  --blue-200: #bcd0f0;
+  --blue-500: #1f6feb;   /* primary action */
+  --blue-600: #1a5fd0;   /* primary hover  */
+  --blue-700: #1f4e8f;   /* on-tint text   */
+
+  /* ── Neutral slate ramp ── */
+  --slate-900: #0f172a;  /* headings            */
+  --slate-800: #1e293b;  /* body / input value  */
+  --slate-600: #475569;  /* labels, secondary   */
+  --slate-500: #64748b;  /* muted / meta        */
+  --slate-400: #94a3b8;  /* faint / placeholder */
+  --slate-300: #cbd5e1;  /* disabled, dividers  */
+  --slate-200: #e2e8f0;
+  --slate-100: #f1f5f9;
+  --slate-50:  #f8fafc;
+
+  /* ── Surfaces & lines ── */
+  --surface-page:     #f6f7f9;  /* app background      */
+  --surface-card:     #ffffff;  /* cards, panels       */
+  --surface-subtle:   #f8fafc;  /* table head, wells   */
+  --surface-sunken:   #eef1f5;  /* modal scrim plate   */
+  --border-card:      #e7ebf0;  /* card & container    */
+  --border-field:     #cdd5df;  /* inputs, buttons     */
+  --border-divider:   #f1f5f9;  /* table row divider   */
+
+  /* ── Status spectrum (request lifecycle) ── */
+  --status-submitted-bg:   #eef2f7;  --status-submitted-fg:  #475569;  --status-submitted-dot: #94a3b8;
+  --status-pending-bg:     #fef3c7;  --status-pending-fg:    #92600a;  --status-pending-dot:   #d99617;
+  --status-approved-bg:    #dcfce7;  --status-approved-fg:   #15803d;  --status-approved-dot:  #22a25a;
+  --status-rejected-bg:    #fee2e2;  --status-rejected-fg:   #b91c1c;  --status-rejected-dot:  #dc4040;
+  --status-exported-bg:    #e0e7ff;  --status-exported-fg:   #4338ca;  --status-exported-dot:  #6366f1;
+
+  /* ── Semantic action colors ── */
+  --success-500: #16a34a;  --success-600: #15803d;  --success-50: #e7f4ec;
+  --danger-600:  #b91c1c;  --danger-border: #f1c7c7;  --danger-50: #fef5f5;
+  --warning-500: #d99617;
+
+  /* ── Avatar ── */
+  --avatar-bg: #dbe5f5;
+  --avatar-fg: #1f4e8f;
+
+  /* ── Semantic text aliases ── */
+  --text-heading:  var(--slate-900);
+  --text-body:     var(--slate-800);
+  --text-label:    var(--slate-600);
+  --text-muted:    var(--slate-500);
+  --text-faint:    var(--slate-400);
+  --text-on-primary: #ffffff;
+  --text-required:   #dc4040;
+}

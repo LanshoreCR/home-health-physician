@@ -1,0 +1,27 @@
+/* ──────────────────────────────────────────────────────────────────────────
+   Effects — radii, borders, shadows — Physician Add Tool
+   ────────────────────────────────────────────────────────────────────────── */
+:root {
+  /* ── Corner radii ── */
+  --radius-xs:   6px;   /* pagination cells           */
+  --radius-sm:   7px;   /* number badges              */
+  --radius-md:   8px;   /* inputs, buttons            */
+  --radius-lg:   10px;  /* small inner cards          */
+  --radius-xl:   12px;  /* panels / cards             */
+  --radius-2xl:  14px;  /* page frames, dialogs       */
+  --radius-pill: 999px; /* status chips, role pills   */
+
+  /* ── Borders ── */
+  --border-width: 1px;
+  --border-width-focus: 1.5px;
+
+  /* ── Shadows ── */
+  --shadow-card:   0 1px 3px rgba(15,23,42,.08);   /* resting card / frame  */
+  --shadow-button: 0 1px 2px rgba(31,111,235,.3);  /* primary blue button   */
+  --shadow-success:0 1px 2px rgba(22,163,74,.3);   /* approve / export btn  */
+  --shadow-dialog: 0 16px 48px rgba(15,23,42,.16); /* modal                 */
+  --shadow-pop:    0 8px 24px rgba(15,23,42,.12);  /* dropdown / menu        */
+
+  /* ── Focus ring ── */
+  --ring-focus: 0 0 0 3px rgba(31,111,235,.12);
+}

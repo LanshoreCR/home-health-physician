@@ -1,0 +1,28 @@
+/* ──────────────────────────────────────────────────────────────────────────
+   Spacing — Physician Add Tool
+   4px base grid. Used for gaps, padding, and stack rhythm.
+   ────────────────────────────────────────────────────────────────────────── */
+:root {
+  --space-1:  4px;
+  --space-2:  6px;
+  --space-3:  8px;
+  --space-4:  10px;
+  --space-5:  12px;
+  --space-6:  14px;
+  --space-7:  16px;
+  --space-8:  18px;
+  --space-9:  20px;
+  --space-10: 24px;
+  --space-11: 28px;
+  --space-12: 32px;
+
+  /* ── Component rhythm ── */
+  --card-pad:        24px;   /* inner padding of a panel/card */
+  --field-gap-row:   16px;   /* vertical gap between fields    */
+  --field-gap-col:   18px;   /* horizontal gap between fields  */
+  --section-gap:     18px;   /* between form sections          */
+  --control-h:       40px;   /* button / filter height         */
+  --input-h:         44px;   /* text input / select height     */
+  --row-pad-y:       18px;   /* table row vertical padding      */
+  --appbar-h:        60px;
+}

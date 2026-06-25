@@ -1,0 +1,37 @@
+/* ──────────────────────────────────────────────────────────────────────────
+   Typography — Physician Add Tool
+   IBM Plex Sans for everything UI; IBM Plex Mono for machine values
+   (NPI, branch codes, zip, phone, fax, filenames).
+   ────────────────────────────────────────────────────────────────────────── */
+:root {
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* ── Font sizes (px) ── */
+  --fs-page-title:   26px;  /* list / detail H1            */
+  --fs-form-title:   24px;  /* form H1                     */
+  --fs-dialog-title: 19px;  /* modal heading               */
+  --fs-section:      16px;  /* form section heading        */
+  --fs-value-lg:     15px;  /* detail read-only value      */
+  --fs-body:         14px;  /* body, inputs, buttons, rows */
+  --fs-mono:         13px;  /* code values in tables       */
+  --fs-small:        13px;  /* meta, pagination            */
+  --fs-label:        12px;  /* field labels                */
+  --fs-caption:      11px;  /* hints, eyebrow, helper       */
+
+  /* ── Weights ── */
+  --fw-regular:  400;
+  --fw-medium:   500;
+  --fw-semibold: 600;
+  --fw-bold:     700;
+
+  /* ── Line heights ── */
+  --lh-tight: 1.1;
+  --lh-snug:  1.3;
+  --lh-body:  1.5;
+
+  /* ── Letter spacing ── */
+  --ls-tight:    -0.01em;   /* large headings        */
+  --ls-eyebrow:   0.06em;   /* uppercase mini labels */
+  --ls-mono:      0.08em;   /* uppercase mono eyebrow */
+}

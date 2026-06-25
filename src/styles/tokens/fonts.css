@@ -1,0 +1,8 @@
+/* ──────────────────────────────────────────────────────────────────────────
+   Fonts — Physician Add Tool
+   IBM Plex Sans (UI) + IBM Plex Mono (codes: NPI, branch, zip, phone, fax)
+   Loaded from Google Fonts. SUBSTITUTION NOTE: no local binaries were
+   provided; IBM Plex is pulled from the Google Fonts CDN. Swap to self-hosted
+   .woff2 if offline / product hosting is required.
+   ────────────────────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
