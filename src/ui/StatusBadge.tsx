@@ -2,15 +2,15 @@ import { type CSSProperties } from 'react';
 import type { RequestStatus } from '../data/types';
 
 const STATUS: Record<RequestStatus, { bg: string; fg: string; dot: string; label: string }> = {
-  submitted: { bg: 'var(--status-submitted-bg)', fg: 'var(--status-submitted-fg)', dot: 'var(--status-submitted-dot)', label: 'Submitted' },
-  pending:   { bg: 'var(--status-pending-bg)',   fg: 'var(--status-pending-fg)',   dot: 'var(--status-pending-dot)',   label: 'Pending Review' },
-  approved:  { bg: 'var(--status-approved-bg)',  fg: 'var(--status-approved-fg)',  dot: 'var(--status-approved-dot)',  label: 'Approved' },
-  rejected:  { bg: 'var(--status-rejected-bg)',  fg: 'var(--status-rejected-fg)',  dot: 'var(--status-rejected-dot)',  label: 'Rejected' },
-  exported:  { bg: 'var(--status-exported-bg)',  fg: 'var(--status-exported-fg)',  dot: 'var(--status-exported-dot)',  label: 'Exported' },
+  new:      { bg: 'var(--status-new-bg)',      fg: 'var(--status-new-fg)',      dot: 'var(--status-new-dot)',      label: 'New' },
+  modify:   { bg: 'var(--status-modify-bg)',   fg: 'var(--status-modify-fg)',   dot: 'var(--status-modify-dot)',   label: 'Modify/Add' },
+  manual:   { bg: 'var(--status-manual-bg)',   fg: 'var(--status-manual-fg)',   dot: 'var(--status-manual-dot)',   label: 'Manual Processing' },
+  notfound: { bg: 'var(--status-notfound-bg)', fg: 'var(--status-notfound-fg)', dot: 'var(--status-notfound-dot)', label: 'Physician Not Found' },
+  special:  { bg: 'var(--status-special-bg)',  fg: 'var(--status-special-fg)',  dot: 'var(--status-special-dot)',  label: 'Pending Special Approval' },
 };
 
 interface StatusBadgeProps {
-  /** Request lifecycle state. @default 'submitted' */
+  /** Request process-flow state. @default 'new' */
   status?: RequestStatus;
   /** sm for table rows, md for the detail header. @default 'sm' */
   size?: 'sm' | 'md';
@@ -20,12 +20,12 @@ interface StatusBadgeProps {
 }
 
 /**
- * StatusBadge — the lifecycle chip for a physician request.
- * status: submitted | pending | approved | rejected | exported.
+ * StatusBadge — the process-flow chip for a physician request.
+ * status: new | modify | manual | notfound | special.
  * size: sm (table rows) | md (detail header).
  */
-export function StatusBadge({ status = 'submitted', size = 'sm', label, style }: StatusBadgeProps) {
-  const s = STATUS[status] || STATUS.submitted;
+export function StatusBadge({ status = 'new', size = 'sm', label, style }: StatusBadgeProps) {
+  const s = STATUS[status] || STATUS.new;
   const lg = size === 'md';
   return (
     <span style={{

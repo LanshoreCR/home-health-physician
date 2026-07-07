@@ -5,6 +5,8 @@ import { RequestDetail } from './screens/RequestDetail';
 import { RequestForm } from './screens/RequestForm';
 import { ExportDialog } from './screens/ExportDialog';
 import { SEED } from './data/seed';
+import { buildPhysicianXlsx, downloadBlob } from './data/exportXlsx';
+import { EXPORTABLE_STATUSES } from './data/types';
 import type { PhysicianRequest, RequestDraft, RequestStatus, StatusFilter } from './data/types';
 
 type View = 'list' | 'detail' | 'form';
@@ -44,7 +46,7 @@ export function App() {
 
   const selected = requests.find((r) => r.id === selectedId) ?? null;
   const editing = requests.find((r) => r.id === editingId) ?? null;
-  const approved = requests.filter((r) => r.status === 'approved');
+  const exportable = requests.filter((r) => EXPORTABLE_STATUSES.includes(r.status));
 
   const branches = useMemo(
     () => Array.from(new Set(requests.map((r) => r.branch))).sort(),
@@ -61,7 +63,7 @@ export function App() {
     });
   }, [requests, search, statusFilter, branchFilter]);
 
-  const setStatus = (id: number, status: RequestStatus) =>
+  const changeStatus = (id: number, status: RequestStatus) =>
     setRequests((rs) => rs.map((r) => (r.id === id ? { ...r, status } : r)));
 
   const openDetail = (id: number) => {
@@ -86,24 +88,18 @@ export function App() {
       return;
     }
     const id = Math.max(0, ...requests.map((r) => r.id)) + 1;
-    const newRequest: PhysicianRequest = { ...values, id, status: 'submitted', created: today(), submitter: 'I. Brooks' };
+    const newRequest: PhysicianRequest = { ...values, id, status: 'new', created: today(), submitter: 'I. Brooks' };
     setRequests((rs) => [newRequest, ...rs]);
     setView('list');
   };
 
-  const approve = (id: number) => {
-    setStatus(id, 'approved');
-    setView('list');
-  };
-
-  const reject = (id: number) => {
-    setStatus(id, 'rejected');
-    setView('list');
-  };
-
-  const confirmExport = () => {
-    setRequests((rs) => rs.map((r) => (r.status === 'approved' ? { ...r, status: 'exported' } : r)));
-    setExportOpen(false);
+  const confirmExport = async () => {
+    try {
+      const blob = await buildPhysicianXlsx(exportable);
+      downloadBlob(blob, exportFilename());
+    } finally {
+      setExportOpen(false);
+    }
   };
 
   const goList = () => setView('list');
@@ -131,7 +127,7 @@ export function App() {
         <RequestsList
           requests={visible}
           totalCount={requests.length}
-          approvedCount={approved.length}
+          exportableCount={exportable.length}
           search={search}
           onSearchChange={setSearch}
           statusFilter={statusFilter}
@@ -148,8 +144,7 @@ export function App() {
       {view === 'detail' && selected && (
         <RequestDetail
           request={selected}
-          onApprove={() => approve(selected.id)}
-          onReject={() => reject(selected.id)}
+          onSetStatus={(status) => changeStatus(selected.id, status)}
           onEdit={() => startEdit(selected.id)}
         />
       )}
@@ -166,7 +161,7 @@ export function App() {
 
       {exportOpen && (
         <ExportDialog
-          approved={approved}
+          requests={exportable}
           filename={exportFilename()}
           onCancel={() => setExportOpen(false)}
           onConfirm={confirmExport}

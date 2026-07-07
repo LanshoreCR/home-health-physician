@@ -17,17 +17,17 @@ const COLS = '1.5fr 1.1fr 1fr 0.8fr 1.1fr 1fr';
 
 const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
   { value: 'all', label: 'All' },
-  { value: 'submitted', label: 'Submitted' },
-  { value: 'pending', label: 'Pending Review' },
-  { value: 'approved', label: 'Approved' },
-  { value: 'rejected', label: 'Rejected' },
-  { value: 'exported', label: 'Exported' },
+  { value: 'new', label: 'New' },
+  { value: 'modify', label: 'Modify/Add' },
+  { value: 'manual', label: 'Manual Processing' },
+  { value: 'notfound', label: 'Physician Not Found' },
+  { value: 'special', label: 'Pending Special Approval' },
 ];
 
 interface RequestsListProps {
   requests: PhysicianRequest[];
   totalCount: number;
-  approvedCount: number;
+  exportableCount: number;
   search: string;
   onSearchChange: (value: string) => void;
   statusFilter: StatusFilter;
@@ -45,7 +45,7 @@ interface RequestsListProps {
  * status chips, working search + filters, and the New / Export primary actions.
  */
 export function RequestsList({
-  requests, totalCount, approvedCount,
+  requests, totalCount, exportableCount,
   search, onSearchChange,
   statusFilter, onStatusFilterChange,
   branchFilter, onBranchFilterChange,
@@ -59,7 +59,7 @@ export function RequestsList({
         <header style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '24px' }}>
           <div>
             <h1 style={{ margin: '0 0 6px', fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 'var(--fs-page-title)', color: 'var(--text-heading)', letterSpacing: 'var(--ls-tight)' }}>Physician requests</h1>
-            <p style={{ margin: 0, fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-body)', color: 'var(--text-muted)' }}>{totalCount} requests · {approvedCount} approved ready to export</p>
+            <p style={{ margin: 0, fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-body)', color: 'var(--text-muted)' }}>{totalCount} requests · {exportableCount} ready to export</p>
           </div>
           <div style={{ display: 'flex', gap: '10px' }}>
             <Button variant="secondary" icon={DownloadIcon} onClick={onExport}>Export to Excel</Button>

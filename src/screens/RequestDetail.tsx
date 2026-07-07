@@ -1,17 +1,21 @@
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
+import { Select } from '../ui/Select';
 import { StatusBadge } from '../ui/StatusBadge';
-import type { PhysicianRequest } from '../data/types';
+import { EXPORTABLE_STATUSES } from '../data/types';
+import type { PhysicianRequest, RequestStatus } from '../data/types';
 
 const EditIcon = (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z" /></svg>
 );
-const XIcon = (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
-);
-const CheckIcon = (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-);
+
+const STATUS_OPTIONS: { value: RequestStatus; label: string }[] = [
+  { value: 'new', label: 'New' },
+  { value: 'modify', label: 'Modify/Add' },
+  { value: 'manual', label: 'Manual Processing' },
+  { value: 'notfound', label: 'Physician Not Found' },
+  { value: 'special', label: 'Pending Special Approval' },
+];
 
 function KV({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
@@ -24,17 +28,17 @@ function KV({ label, value, mono }: { label: string; value: string; mono?: boole
 
 interface RequestDetailProps {
   request: PhysicianRequest;
-  onApprove: () => void;
-  onReject: () => void;
+  onSetStatus: (status: RequestStatus) => void;
   onEdit: () => void;
 }
 
 /**
  * RequestDetail — review view. Prominent status, grouped read-only data,
- * a status timeline, and the reviewer's Edit / Reject / Approve actions.
+ * a status timeline, and the reviewer's Edit + status disposition controls.
  */
-export function RequestDetail({ request, onApprove, onReject, onEdit }: RequestDetailProps) {
+export function RequestDetail({ request, onSetStatus, onEdit }: RequestDetailProps) {
   const r = request;
+  const exportable = EXPORTABLE_STATUSES.includes(r.status);
   return (
     <div style={{ background: 'var(--surface-page)', maxWidth: 'var(--page-max)', margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '28px var(--page-gutter) 24px', background: 'var(--surface-card)', borderBottom: '1px solid var(--border-card)' }}>
@@ -51,10 +55,18 @@ export function RequestDetail({ request, onApprove, onReject, onEdit }: RequestD
             <span>Created {r.created}</span>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <Button variant="secondary" size="lg" icon={EditIcon} onClick={onEdit}>Edit</Button>
-          <Button variant="danger" size="lg" icon={XIcon} onClick={onReject}>Reject</Button>
-          <Button variant="success" size="lg" icon={CheckIcon} onClick={onApprove}>Approve</Button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <span style={{ fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-label)', color: 'var(--text-faint)' }}>Set status</span>
+            <Select
+              value={r.status}
+              options={STATUS_OPTIONS}
+              placeholder=""
+              onChange={(e) => onSetStatus(e.target.value as RequestStatus)}
+              style={{ minWidth: '220px' }}
+            />
+          </div>
         </div>
       </div>
 
@@ -91,11 +103,15 @@ export function RequestDetail({ request, onApprove, onReject, onEdit }: RequestD
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
           <Card eyebrow="Status">
-            <Timeline created={r.created} submitter={r.submitter} />
+            <Timeline request={r} exportable={exportable} />
           </Card>
           <div style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border-card)', borderRadius: 'var(--radius-xl)', padding: '20px', display: 'flex', gap: '10px' }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--blue-500)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: '1px' }}><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></svg>
-            <p style={{ margin: 0, fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-mono)', lineHeight: 'var(--lh-body)', color: 'var(--text-label)' }}>Review each field for completeness and format. Approving moves this request into the next export batch to HCHB.</p>
+            <p style={{ margin: 0, fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-mono)', lineHeight: 'var(--lh-body)', color: 'var(--text-label)' }}>
+              {exportable
+                ? 'New and Modify/Add requests are clean and included in the next export batch to HCHB.'
+                : 'This request is held for review. Route it to New or Modify/Add once resolved to include it in the export batch to HCHB.'}
+            </p>
           </div>
         </div>
       </div>
@@ -125,12 +141,27 @@ function Step({ color, ring, title, sub, mutedTitle, line = true }: {
   );
 }
 
-function Timeline({ created, submitter }: { created: string; submitter: string }) {
+const STATUS_META: Record<RequestStatus, { color: string; ring: string; label: string; sub: string }> = {
+  new:      { color: 'var(--status-new-dot)',      ring: 'var(--status-new-bg)',      label: 'New',                     sub: 'Clean · ready to export' },
+  modify:   { color: 'var(--status-modify-dot)',   ring: 'var(--status-modify-bg)',   label: 'Modify/Add',              sub: 'Clean · ready to export' },
+  manual:   { color: 'var(--status-manual-dot)',   ring: 'var(--status-manual-bg)',   label: 'Manual Processing',       sub: 'Held for a processor' },
+  notfound: { color: 'var(--status-notfound-dot)', ring: 'var(--status-notfound-bg)', label: 'Physician Not Found',     sub: 'NPI unmatched · needs resolution' },
+  special:  { color: 'var(--status-special-dot)',  ring: 'var(--status-special-bg)',  label: 'Pending Special Approval', sub: 'Escalated · awaiting sign-off' },
+};
+
+function Timeline({ request, exportable }: { request: PhysicianRequest; exportable: boolean }) {
+  const m = STATUS_META[request.status];
   return (
     <div>
-      <Step color="var(--success-500)" title="Submitted" sub={`${created} · ${submitter}`} />
-      <Step color="var(--warning-500)" ring="var(--status-pending-bg)" title="Pending Review" sub="Awaiting your decision" />
-      <Step color="#fff" mutedTitle title="Approved / Rejected" sub="Then exported to HCHB" line={false} />
+      <Step color="var(--success-500)" title="Submitted" sub={`${request.created} · ${request.submitter}`} />
+      <Step color={m.color} ring={m.ring} title={m.label} sub={m.sub} />
+      <Step
+        color={exportable ? 'var(--status-new-dot)' : '#fff'}
+        mutedTitle={!exportable}
+        title="Exported to HCHB"
+        sub={exportable ? 'In the next export batch' : 'Once clean (New / Modify/Add)'}
+        line={false}
+      />
     </div>
   );
 }

@@ -6,17 +6,17 @@ const DownloadIcon = (
 );
 
 interface ExportDialogProps {
-  approved: PhysicianRequest[];
+  requests: PhysicianRequest[];
   filename?: string;
   onCancel: () => void;
   onConfirm: () => void;
 }
 
 /**
- * ExportDialog — confirms exporting Approved requests to an HCHB-formatted
- * Excel file. Exported requests are marked `Exported` to prevent duplicates.
+ * ExportDialog — confirms exporting the clean (New / Modify/Add) requests to
+ * an HCHB-formatted Excel file. Held requests are excluded from the batch.
  */
-export function ExportDialog({ approved, filename = 'PAT_Export.xlsx', onCancel, onConfirm }: ExportDialogProps) {
+export function ExportDialog({ requests, filename = 'PAT_Export.xlsx', onCancel, onConfirm }: ExportDialogProps) {
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
       <div style={{ width: '520px', background: 'var(--surface-card)', borderRadius: 'var(--radius-2xl)', boxShadow: 'var(--shadow-dialog)', overflow: 'hidden' }}>
@@ -25,16 +25,16 @@ export function ExportDialog({ approved, filename = 'PAT_Export.xlsx', onCancel,
             <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '38px', height: '38px', borderRadius: 'var(--radius-lg)', background: 'var(--success-50)' }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--success-500)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
             </span>
-            <h2 style={{ margin: 0, fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 'var(--fs-dialog-title)', color: 'var(--text-heading)' }}>Export approved requests</h2>
+            <h2 style={{ margin: 0, fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 'var(--fs-dialog-title)', color: 'var(--text-heading)' }}>Export ready requests</h2>
           </div>
           <p style={{ margin: '0 0 20px 50px', fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-body)', lineHeight: 'var(--lh-body)', color: 'var(--text-muted)' }}>
-            {approved.length} approved requests will be exported to an HCHB-formatted Excel file and marked as <span style={{ fontWeight: 600, color: 'var(--status-exported-fg)' }}>Exported</span>.
+            {requests.length} clean <span style={{ fontWeight: 600, color: 'var(--status-new-fg)' }}>New / Modify/Add</span> requests will be exported to an HCHB-formatted Excel file. Held requests are excluded.
           </p>
         </div>
 
         <div style={{ margin: '0 26px', border: '1px solid var(--border-card)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
-          {approved.map((r, i) => (
-            <div key={r.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: i === approved.length - 1 ? 'none' : '1px solid var(--border-divider)', fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-body)' }}>
+          {requests.map((r, i) => (
+            <div key={r.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: i === requests.length - 1 ? 'none' : '1px solid var(--border-divider)', fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-body)' }}>
               <span style={{ color: 'var(--text-heading)', fontWeight: 500 }}>{r.first} {r.last} <span style={{ color: 'var(--text-faint)', fontWeight: 400 }}>· {r.degree}</span></span>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-mono)', color: 'var(--text-muted)' }}>{r.npi}</span>
             </div>
@@ -47,13 +47,13 @@ export function ExportDialog({ approved, filename = 'PAT_Export.xlsx', onCancel,
           </span>
           <div style={{ flex: 1 }}>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-mono)', color: 'var(--text-heading)' }}>{filename}</div>
-            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-caption)', color: 'var(--text-faint)' }}>HCHB upload format · {approved.length} rows</div>
+            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-caption)', color: 'var(--text-faint)' }}>HCHB upload format · {requests.length} rows</div>
           </div>
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', padding: '20px 26px 24px' }}>
           <Button variant="ghost" onClick={onCancel}>Cancel</Button>
-          <Button variant="success" icon={DownloadIcon} onClick={onConfirm}>Export {approved.length} requests</Button>
+          <Button variant="success" icon={DownloadIcon} onClick={onConfirm}>Export {requests.length} requests</Button>
         </div>
       </div>
     </div>

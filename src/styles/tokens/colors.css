@@ -32,12 +32,13 @@
   --border-field:     #cdd5df;  /* inputs, buttons     */
   --border-divider:   #f1f5f9;  /* table row divider   */
 
-  /* ── Status spectrum (request lifecycle) ── */
-  --status-submitted-bg:   #eef2f7;  --status-submitted-fg:  #475569;  --status-submitted-dot: #94a3b8;
-  --status-pending-bg:     #fef3c7;  --status-pending-fg:    #92600a;  --status-pending-dot:   #d99617;
-  --status-approved-bg:    #dcfce7;  --status-approved-fg:   #15803d;  --status-approved-dot:  #22a25a;
-  --status-rejected-bg:    #fee2e2;  --status-rejected-fg:   #b91c1c;  --status-rejected-dot:  #dc4040;
-  --status-exported-bg:    #e0e7ff;  --status-exported-fg:   #4338ca;  --status-exported-dot:  #6366f1;
+  /* ── Status spectrum (PAT process flow) ──
+     new / modify are clean, export-ready; manual / notfound / special are held. */
+  --status-new-bg:       #dcfce7;  --status-new-fg:       #15803d;  --status-new-dot:       #22a25a;
+  --status-modify-bg:    #e0edff;  --status-modify-fg:    #1f4e8f;  --status-modify-dot:    #3b82f6;
+  --status-manual-bg:    #fef3c7;  --status-manual-fg:    #92600a;  --status-manual-dot:    #d99617;
+  --status-notfound-bg:  #fee2e2;  --status-notfound-fg:  #b91c1c;  --status-notfound-dot:  #dc4040;
+  --status-special-bg:   #e0e7ff;  --status-special-fg:   #4338ca;  --status-special-dot:   #6366f1;
 
   /* ── Semantic action colors ── */
   --success-500: #16a34a;  --success-600: #15803d;  --success-50: #e7f4ec;

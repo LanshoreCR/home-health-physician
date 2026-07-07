@@ -1,4 +1,7 @@
-export type RequestStatus = 'submitted' | 'pending' | 'approved' | 'rejected' | 'exported';
+export type RequestStatus = 'new' | 'modify' | 'manual' | 'notfound' | 'special';
+
+/** Clean states whose requests are ready to export to HCHB. */
+export const EXPORTABLE_STATUSES: RequestStatus[] = ['new', 'modify'];
 
 export interface PhysicianRequest {
   id: number;
