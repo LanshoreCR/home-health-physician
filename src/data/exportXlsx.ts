@@ -15,7 +15,9 @@ async function loadTemplate(): Promise<Uint8Array> {
 
 export async function buildPhysicianXlsx(requests: PhysicianRequest[]): Promise<Blob> {
   const out = fillTemplate(await loadTemplate(), requests);
-  return new Blob([out], { type: XLSX_MIME });
+  const buffer = new ArrayBuffer(out.byteLength);
+  new Uint8Array(buffer).set(out);
+  return new Blob([buffer], { type: XLSX_MIME });
 }
 
 export function downloadBlob(blob: Blob, filename: string): void {
