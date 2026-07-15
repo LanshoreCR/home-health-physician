@@ -13,7 +13,7 @@ interface ExportDialogProps {
 }
 
 /**
- * ExportDialog — confirms exporting the clean (New / Modify/Add) requests to
+ * ExportDialog — confirms exporting the clean (New Request / Modify Physician / Request Approved) requests to
  * an HCHB-formatted Excel file. Held requests are excluded from the batch.
  */
 export function ExportDialog({ requests, filename = 'PAT_Export.xlsx', onCancel, onConfirm }: ExportDialogProps) {
@@ -28,7 +28,7 @@ export function ExportDialog({ requests, filename = 'PAT_Export.xlsx', onCancel,
             <h2 style={{ margin: 0, fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 'var(--fs-dialog-title)', color: 'var(--text-heading)' }}>Export ready requests</h2>
           </div>
           <p style={{ margin: '0 0 20px 50px', fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-body)', lineHeight: 'var(--lh-body)', color: 'var(--text-muted)' }}>
-            {requests.length} clean <span style={{ fontWeight: 600, color: 'var(--status-new-fg)' }}>New / Modify/Add</span> requests will be exported to an HCHB-formatted Excel file. Held requests are excluded.
+            {requests.length} clean <span style={{ fontWeight: 600, color: 'var(--status-newreq-fg)' }}>New Request / Modify Physician / Request Approved</span> requests will be exported to an HCHB-formatted Excel file. Held requests are excluded.
           </p>
         </div>
 

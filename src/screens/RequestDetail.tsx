@@ -2,7 +2,7 @@ import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { Select } from '../ui/Select';
 import { StatusBadge } from '../ui/StatusBadge';
-import { EXPORTABLE_STATUSES } from '../data/types';
+import { EXPORTABLE_STATUSES, TRIGGER_STATUSES } from '../data/types';
 import type { PhysicianRequest, RequestStatus } from '../data/types';
 
 const EditIcon = (
@@ -10,18 +10,25 @@ const EditIcon = (
 );
 
 const STATUS_OPTIONS: { value: RequestStatus; label: string }[] = [
-  { value: 'new', label: 'New' },
-  { value: 'modify', label: 'Modify/Add' },
-  { value: 'manual', label: 'Manual Processing' },
-  { value: 'notfound', label: 'Physician Not Found' },
-  { value: 'special', label: 'Pending Special Approval' },
+  { value: 'newreq', label: 'New Request' },
+  { value: 'duplicate', label: 'Duplicate Phy/NPI' },
+  { value: 'modify', label: 'Modify Physician' },
+  { value: 'manual', label: 'Manual Entry' },
+  { value: 'special', label: 'Special Approval Requested' },
+  { value: 'denied', label: 'Request Denied' },
+  { value: 'approved', label: 'Request Approved' },
 ];
+
+const PHYSICIAN_TYPE_LABEL: Record<string, string> = {
+  f2f: 'F2F Only',
+  primarySecondary: 'Primary/Secondary',
+};
 
 function KV({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
     <div>
       <div style={{ fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-label)', color: 'var(--text-faint)', marginBottom: '4px' }}>{label}</div>
-      <div style={{ fontFamily: mono ? 'var(--font-mono)' : 'var(--font-sans)', fontSize: mono ? 'var(--fs-body)' : 'var(--fs-value-lg)', fontWeight: mono ? 400 : 500, color: 'var(--text-heading)' }}>{value}</div>
+      <div style={{ fontFamily: mono ? 'var(--font-mono)' : 'var(--font-sans)', fontSize: mono ? 'var(--fs-body)' : 'var(--fs-value-lg)', fontWeight: mono ? 400 : 500, color: 'var(--text-heading)' }}>{value || '—'}</div>
     </div>
   );
 }
@@ -72,6 +79,15 @@ export function RequestDetail({ request, onSetStatus, onEdit }: RequestDetailPro
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '24px', padding: '28px var(--page-gutter) 36px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+          <Card eyebrow="Patient & requester">
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
+              <KV label="Patient name" value={r.patientName} />
+              <KV label="MRN" value={r.mrn} mono />
+              <KV label="Patient status" value={r.patientStatus} />
+              <KV label="Requester" value={r.requesterName} />
+              <KV label="Requester email" value={r.requesterEmail} />
+            </div>
+          </Card>
           <Card eyebrow="Physician">
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
               <KV label="First name" value={r.first} />
@@ -79,6 +95,15 @@ export function RequestDetail({ request, onSetStatus, onEdit }: RequestDetailPro
               <KV label="Degree" value={r.degree} />
               <KV label="Branch code" value={r.branch} mono />
               <KV label="NPI number" value={r.npi} mono />
+              <KV label="Physician type" value={PHYSICIAN_TYPE_LABEL[r.physicianType] || '—'} />
+              <KV label="VA/Tricare" value={r.vaTricare ? 'Yes' : 'No'} />
+              <KV label="Pecos verified" value={r.pecosVerified ? 'Yes' : 'No'} />
+              <KV label="License number" value={r.licenseNumber} />
+              <KV label="License state" value={r.licenseState} />
+              <KV label="License expiration" value={r.licenseExp} />
+              <KV label="Specialty" value={r.specialty} />
+              <KV label="Taxonomy" value={r.taxonomy} />
+              <KV label="Physician group" value={r.physicianGroup} />
             </div>
           </Card>
           <Card eyebrow="Notifications">
@@ -97,6 +122,9 @@ export function RequestDetail({ request, onSetStatus, onEdit }: RequestDetailPro
               <KV label="Fax" value={r.fax} mono />
               <KV label="Vital sign alerts to office" value={r.officeVital} />
               <KV label="New order notification to office" value={r.officeOrder} />
+              <KV label="Admission coordinator" value={r.admissionCoordinator} />
+              <KV label="Physician group" value={r.officePhysicianGroup} />
+              <div style={{ gridColumn: '1 / -1' }}><KV label="Additional details" value={r.additionalDetails} /></div>
             </div>
           </Card>
         </div>
@@ -105,12 +133,20 @@ export function RequestDetail({ request, onSetStatus, onEdit }: RequestDetailPro
           <Card eyebrow="Status">
             <Timeline request={r} exportable={exportable} />
           </Card>
+          {TRIGGER_STATUSES.includes(r.status) && (
+            <div style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border-card)', borderRadius: 'var(--radius-xl)', padding: '20px', display: 'flex', gap: '10px' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--blue-500)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: '1px' }}><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></svg>
+              <p style={{ margin: 0, fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-mono)', lineHeight: 'var(--lh-body)', color: 'var(--text-label)' }}>
+                {'A response regarding this request will be sent to ' + r.requesterEmail}
+              </p>
+            </div>
+          )}
           <div style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border-card)', borderRadius: 'var(--radius-xl)', padding: '20px', display: 'flex', gap: '10px' }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--blue-500)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: '1px' }}><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></svg>
             <p style={{ margin: 0, fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-mono)', lineHeight: 'var(--lh-body)', color: 'var(--text-label)' }}>
               {exportable
-                ? 'New and Modify/Add requests are clean and included in the next export batch to HCHB.'
-                : 'This request is held for review. Route it to New or Modify/Add once resolved to include it in the export batch to HCHB.'}
+                ? 'New Request, Modify Physician, and Request Approved records are clean and included in the next export batch to HCHB.'
+                : 'This request is held for review. Route it to New Request, Modify Physician, or Request Approved once resolved to include it in the export batch to HCHB.'}
             </p>
           </div>
         </div>
@@ -142,11 +178,13 @@ function Step({ color, ring, title, sub, mutedTitle, line = true }: {
 }
 
 const STATUS_META: Record<RequestStatus, { color: string; ring: string; label: string; sub: string }> = {
-  new:      { color: 'var(--status-new-dot)',      ring: 'var(--status-new-bg)',      label: 'New',                     sub: 'Clean · ready to export' },
-  modify:   { color: 'var(--status-modify-dot)',   ring: 'var(--status-modify-bg)',   label: 'Modify/Add',              sub: 'Clean · ready to export' },
-  manual:   { color: 'var(--status-manual-dot)',   ring: 'var(--status-manual-bg)',   label: 'Manual Processing',       sub: 'Held for a processor' },
-  notfound: { color: 'var(--status-notfound-dot)', ring: 'var(--status-notfound-bg)', label: 'Physician Not Found',     sub: 'NPI unmatched · needs resolution' },
-  special:  { color: 'var(--status-special-dot)',  ring: 'var(--status-special-bg)',  label: 'Pending Special Approval', sub: 'Escalated · awaiting sign-off' },
+  newreq:    { color: 'var(--status-newreq-dot)',    ring: 'var(--status-newreq-bg)',    label: 'New Request',                sub: 'Clean · ready to export' },
+  modify:    { color: 'var(--status-modify-dot)',    ring: 'var(--status-modify-bg)',    label: 'Modify Physician',           sub: 'Clean · ready to export' },
+  approved:  { color: 'var(--status-approved-dot)',  ring: 'var(--status-approved-bg)',  label: 'Request Approved',           sub: 'Approved · ready to export' },
+  duplicate: { color: 'var(--status-duplicate-dot)', ring: 'var(--status-duplicate-bg)', label: 'Duplicate Phy/NPI',          sub: 'Possible duplicate · needs resolution' },
+  manual:    { color: 'var(--status-manual-dot)',    ring: 'var(--status-manual-bg)',    label: 'Manual Entry',               sub: 'Held for a processor' },
+  special:   { color: 'var(--status-special-dot)',   ring: 'var(--status-special-bg)',   label: 'Special Approval Requested', sub: 'Escalated · awaiting sign-off' },
+  denied:    { color: 'var(--status-denied-dot)',    ring: 'var(--status-denied-bg)',    label: 'Request Denied',             sub: 'Denied · requester notified' },
 };
 
 function Timeline({ request, exportable }: { request: PhysicianRequest; exportable: boolean }) {
@@ -156,10 +194,10 @@ function Timeline({ request, exportable }: { request: PhysicianRequest; exportab
       <Step color="var(--success-500)" title="Submitted" sub={`${request.created} · ${request.submitter}`} />
       <Step color={m.color} ring={m.ring} title={m.label} sub={m.sub} />
       <Step
-        color={exportable ? 'var(--status-new-dot)' : '#fff'}
+        color={exportable ? 'var(--status-newreq-dot)' : '#fff'}
         mutedTitle={!exportable}
         title="Exported to HCHB"
-        sub={exportable ? 'In the next export batch' : 'Once clean (New / Modify/Add)'}
+        sub={exportable ? 'In the next export batch' : 'Once New Request / Modify Physician / Request Approved'}
         line={false}
       />
     </div>

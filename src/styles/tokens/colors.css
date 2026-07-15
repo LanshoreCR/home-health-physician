@@ -1,7 +1,7 @@
 /* ──────────────────────────────────────────────────────────────────────────
    Colors — Physician Add Tool design system
    A calm, trustworthy healthcare back-office palette: blue primary,
-   slate neutrals, and a five-state status spectrum for the request lifecycle.
+   slate neutrals, and a seven-state status spectrum for the request lifecycle.
    ────────────────────────────────────────────────────────────────────────── */
 :root {
   /* ── Brand / primary (action blue) ── */
@@ -33,12 +33,14 @@
   --border-divider:   #f1f5f9;  /* table row divider   */
 
   /* ── Status spectrum (PAT process flow) ──
-     new / modify are clean, export-ready; manual / notfound / special are held. */
-  --status-new-bg:       #dcfce7;  --status-new-fg:       #15803d;  --status-new-dot:       #22a25a;
+     newreq / modify / approved are clean, export-ready; the rest are held. */
+  --status-newreq-bg:    #dcfce7;  --status-newreq-fg:    #15803d;  --status-newreq-dot:    #22a25a;
+  --status-duplicate-bg: #ede9fe;  --status-duplicate-fg: #6d28d9;  --status-duplicate-dot: #8b5cf6;
   --status-modify-bg:    #e0edff;  --status-modify-fg:    #1f4e8f;  --status-modify-dot:    #3b82f6;
   --status-manual-bg:    #fef3c7;  --status-manual-fg:    #92600a;  --status-manual-dot:    #d99617;
-  --status-notfound-bg:  #fee2e2;  --status-notfound-fg:  #b91c1c;  --status-notfound-dot:  #dc4040;
   --status-special-bg:   #e0e7ff;  --status-special-fg:   #4338ca;  --status-special-dot:   #6366f1;
+  --status-denied-bg:    #fee2e2;  --status-denied-fg:    #b91c1c;  --status-denied-dot:    #dc4040;
+  --status-approved-bg:  #ccfbf1;  --status-approved-fg:  #0f766e;  --status-approved-dot:  #14b8a6;
 
   /* ── Semantic action colors ── */
   --success-500: #16a34a;  --success-600: #15803d;  --success-50: #e7f4ec;

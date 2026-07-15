@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { Button } from '../ui/Button';
 import { StatusBadge } from '../ui/StatusBadge';
 import type { PhysicianRequest, StatusFilter } from '../data/types';
@@ -13,15 +13,21 @@ const SearchIcon = (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--slate-400)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
 );
 
-const COLS = '1.5fr 1.1fr 1fr 0.8fr 1.1fr 1fr';
+const COLS = 'minmax(0,1.5fr) minmax(0,1fr) minmax(0,0.85fr) minmax(0,0.5fr) minmax(0,1.15fr) minmax(0,0.7fr) minmax(0,1.25fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.5fr) minmax(0,1.5fr) minmax(0,0.85fr)';
+
+const HEADERS = ['Physician', 'NPI', 'Branch Code', 'Degree', 'Type', 'VA/Tricare', 'Patient', 'MRN', 'Patient Status', 'Requester', 'Status', 'Created'];
+
+const CELL: CSSProperties = { minWidth: 0, overflowWrap: 'anywhere' };
 
 const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
   { value: 'all', label: 'All' },
-  { value: 'new', label: 'New' },
-  { value: 'modify', label: 'Modify/Add' },
-  { value: 'manual', label: 'Manual Processing' },
-  { value: 'notfound', label: 'Physician Not Found' },
-  { value: 'special', label: 'Pending Special Approval' },
+  { value: 'newreq', label: 'New Request' },
+  { value: 'duplicate', label: 'Duplicate Phy/NPI' },
+  { value: 'modify', label: 'Modify Physician' },
+  { value: 'manual', label: 'Manual Entry' },
+  { value: 'special', label: 'Special Approval Requested' },
+  { value: 'denied', label: 'Request Denied' },
+  { value: 'approved', label: 'Request Approved' },
 ];
 
 interface RequestsListProps {
@@ -82,9 +88,9 @@ export function RequestsList({
         </div>
 
         <div style={{ overflowX: 'auto' }}>
-          <div style={{ background: 'var(--surface-card)', border: '1px solid var(--border-card)', borderRadius: 'var(--radius-xl)', overflow: 'hidden', minWidth: '720px' }}>
+          <div style={{ background: 'var(--surface-card)', border: '1px solid var(--border-card)', borderRadius: 'var(--radius-xl)', overflow: 'hidden', minWidth: '1440px' }}>
             <div style={{ display: 'grid', gridTemplateColumns: COLS, gap: '16px', padding: '14px 24px', background: 'var(--surface-subtle)', borderBottom: '1px solid var(--border-card)', fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 600, letterSpacing: 'var(--ls-eyebrow)', textTransform: 'uppercase', color: 'var(--text-faint)' }}>
-              <span>Physician</span><span>NPI</span><span>Branch Code</span><span>Degree</span><span>Status</span><span>Created</span>
+              {HEADERS.map((h) => <span key={h} style={CELL}>{h}</span>)}
             </div>
             {requests.length === 0 && (
               <div style={{ padding: '40px 24px', textAlign: 'center', fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-body)', color: 'var(--text-faint)' }}>No requests match your filters.</div>
@@ -129,12 +135,21 @@ function Row({ r, last, onOpen }: { r: PhysicianRequest; last: boolean; onOpen: 
       onMouseLeave={() => setHover(false)}
       style={{ display: 'grid', gridTemplateColumns: COLS, gap: '16px', padding: '18px 24px', alignItems: 'center', borderBottom: last ? 'none' : '1px solid var(--border-divider)', background: hover ? '#f8fbff' : 'transparent', fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-body)', color: 'var(--text-body)', cursor: 'pointer' }}
     >
-      <span style={{ fontWeight: 600 }}>{r.first} {r.last}</span>
-      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-mono)', color: 'var(--text-label)' }}>{r.npi}</span>
-      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-mono)', color: 'var(--text-label)' }}>{r.branch}</span>
-      <span style={{ color: 'var(--text-label)' }}>{r.degree}</span>
-      <StatusBadge status={r.status} />
-      <span style={{ color: 'var(--text-muted)' }}>{r.created}</span>
+      <span style={{ ...CELL, fontWeight: 600 }}>{r.first} {r.last}</span>
+      <span style={{ ...CELL, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-mono)', color: 'var(--text-label)' }}>{r.npi}</span>
+      <span style={{ ...CELL, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-mono)', color: 'var(--text-label)' }}>{r.branch}</span>
+      <span style={{ ...CELL, color: 'var(--text-label)' }}>{r.degree}</span>
+      <span style={CELL}>{r.physicianType === 'f2f' ? 'F2F Only' : r.physicianType === 'primarySecondary' ? 'Primary/Secondary' : '—'}</span>
+      <span style={CELL}>{r.vaTricare ? 'Yes' : '—'}</span>
+      <span style={CELL}>{r.patientName}</span>
+      <span style={{ ...CELL, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-mono)', color: 'var(--text-label)' }}>{r.mrn}</span>
+      <span style={CELL}>{r.patientStatus}</span>
+      <div style={{ ...CELL, display: 'flex', flexDirection: 'column' }}>
+        <span style={CELL}>{r.requesterName}</span>
+        <span style={{ ...CELL, fontSize: 'var(--fs-caption)', color: 'var(--text-faint)' }}>{r.requesterEmail}</span>
+      </div>
+      <StatusBadge status={r.status} style={{ minWidth: 0, whiteSpace: 'normal' }} />
+      <span style={{ ...CELL, color: 'var(--text-muted)' }}>{r.created}</span>
     </div>
   );
 }

@@ -27,10 +27,17 @@ function exportFilename() {
 
 function toDraft(r: PhysicianRequest): RequestDraft {
   return {
-    first: r.first, last: r.last, npi: r.npi, branch: r.branch, degree: r.degree,
-    vitalAlerts: r.vitalAlerts, orderNotif: r.orderNotif,
+    patientName: r.patientName, mrn: r.mrn, patientStatus: r.patientStatus,
+    requesterName: r.requesterName, requesterEmail: r.requesterEmail,
+    first: r.first, last: r.last, npi: r.npi, degree: r.degree,
+    physicianType: r.physicianType, vaTricare: r.vaTricare, pecosVerified: r.pecosVerified,
+    licenseNumber: r.licenseNumber, licenseState: r.licenseState, licenseExp: r.licenseExp,
+    specialty: r.specialty, taxonomy: r.taxonomy, physicianGroup: r.physicianGroup,
+    vitalAlerts: r.vitalAlerts, orderNotif: r.orderNotif, branch: r.branch,
     address: r.address, city: r.city, state: r.state, zip: r.zip, phone: r.phone, fax: r.fax,
     officeVital: r.officeVital, officeOrder: r.officeOrder,
+    officePhysicianGroup: r.officePhysicianGroup,
+    admissionCoordinator: r.admissionCoordinator, additionalDetails: r.additionalDetails,
   };
 }
 
@@ -56,7 +63,7 @@ export function App() {
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
     return requests.filter((r) => {
-      const matchesSearch = q === '' || `${r.first} ${r.last}`.toLowerCase().includes(q) || r.npi.includes(q);
+      const matchesSearch = q === '' || `${r.first} ${r.last}`.toLowerCase().includes(q) || r.npi.includes(q) || r.patientName.toLowerCase().includes(q) || r.mrn.toLowerCase().includes(q);
       const matchesStatus = statusFilter === 'all' || r.status === statusFilter;
       const matchesBranch = branchFilter === 'all' || r.branch === branchFilter;
       return matchesSearch && matchesStatus && matchesBranch;
@@ -88,7 +95,7 @@ export function App() {
       return;
     }
     const id = Math.max(0, ...requests.map((r) => r.id)) + 1;
-    const newRequest: PhysicianRequest = { ...values, id, status: 'new', created: today(), submitter: 'I. Brooks' };
+    const newRequest: PhysicianRequest = { ...values, id, status: 'newreq', created: today(), submitter: 'I. Brooks' };
     setRequests((rs) => [newRequest, ...rs]);
     setView('list');
   };
