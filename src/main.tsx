@@ -4,6 +4,17 @@ import './styles/styles.css'
 import './styles/base.css'
 import { App } from './App.tsx'
 
+// Punto de enganche de Okta. Cuando exista el cliente, esta única línea hace que
+// todos los endpoints manden Bearer token — ningún módulo de src/api/ cambia:
+//
+//   configureAuth(
+//     () => oktaAuth.getAccessToken() ?? null,
+//     () => oktaAuth.signInWithRedirect(),
+//   )
+//
+// Recomendado: tokenManager con storage 'memory' + getWithoutPrompt() al montar,
+// para que el access token nunca toque localStorage.
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
