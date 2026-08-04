@@ -1,7 +1,8 @@
 import { useState, type CSSProperties } from 'react';
 import { Button } from '../ui/Button';
 import { StatusBadge } from '../ui/StatusBadge';
-import type { PhysicianRequest, StatusFilter } from '../data/types';
+import { PHYSICIAN_TYPE_LABEL, STATUS_FILTER_OPTIONS } from '../data/labels';
+import type { PhysicianRequestListItem, StatusFilter } from '../data/types';
 
 const DownloadIcon = (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
@@ -19,21 +20,12 @@ const HEADERS = ['Physician', 'NPI', 'Branch Code', 'Degree', 'Type', 'VA/Tricar
 
 const CELL: CSSProperties = { minWidth: 0, overflowWrap: 'anywhere' };
 
-const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
-  { value: 'all', label: 'All' },
-  { value: 'newreq', label: 'New Request' },
-  { value: 'duplicate', label: 'Duplicate Phy/NPI' },
-  { value: 'modify', label: 'Modify Physician' },
-  { value: 'manual', label: 'Manual Entry' },
-  { value: 'special', label: 'Special Approval Requested' },
-  { value: 'denied', label: 'Request Denied' },
-  { value: 'approved', label: 'Request Approved' },
-];
-
 interface RequestsListProps {
-  requests: PhysicianRequest[];
+  requests: PhysicianRequestListItem[];
   totalCount: number;
   exportableCount: number;
+  loading: boolean;
+  error: string | null;
   search: string;
   onSearchChange: (value: string) => void;
   statusFilter: StatusFilter;
@@ -51,7 +43,7 @@ interface RequestsListProps {
  * status chips, working search + filters, and the New / Export primary actions.
  */
 export function RequestsList({
-  requests, totalCount, exportableCount,
+  requests, totalCount, exportableCount, loading, error,
   search, onSearchChange,
   statusFilter, onStatusFilterChange,
   branchFilter, onBranchFilterChange,
@@ -83,7 +75,7 @@ export function RequestsList({
               style={{ width: '100%', height: 'var(--control-h)', padding: '0 12px 0 36px', background: 'var(--surface-card)', border: '1px solid var(--border-field)', borderRadius: 'var(--radius-md)', fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-body)', color: 'var(--text-body)', outline: 'none', boxSizing: 'border-box' }}
             />
           </div>
-          <FilterSelect label="Status" value={statusFilter} options={STATUS_OPTIONS} onChange={(v) => onStatusFilterChange(v as StatusFilter)} />
+          <FilterSelect label="Status" value={statusFilter} options={STATUS_FILTER_OPTIONS} onChange={(v) => onStatusFilterChange(v as StatusFilter)} />
           <FilterSelect label="Branch" value={branchFilter} options={branchOptions} onChange={onBranchFilterChange} />
         </div>
 
@@ -92,10 +84,12 @@ export function RequestsList({
             <div style={{ display: 'grid', gridTemplateColumns: COLS, gap: '16px', padding: '14px 24px', background: 'var(--surface-subtle)', borderBottom: '1px solid var(--border-card)', fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 600, letterSpacing: 'var(--ls-eyebrow)', textTransform: 'uppercase', color: 'var(--text-faint)' }}>
               {HEADERS.map((h) => <span key={h} style={CELL}>{h}</span>)}
             </div>
-            {requests.length === 0 && (
-              <div style={{ padding: '40px 24px', textAlign: 'center', fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-body)', color: 'var(--text-faint)' }}>No requests match your filters.</div>
+            {loading && <TableNotice text="Loading requests…" />}
+            {!loading && error && <TableNotice text={error} tone="error" />}
+            {!loading && !error && requests.length === 0 && (
+              <TableNotice text="No requests match your filters." />
             )}
-            {requests.map((r, i) => (
+            {!loading && !error && requests.map((r, i) => (
               <Row key={r.id} r={r} last={i === requests.length - 1} onOpen={onOpen} />
             ))}
           </div>
@@ -126,7 +120,13 @@ function FilterSelect({ label, value, options, onChange }: {
   );
 }
 
-function Row({ r, last, onOpen }: { r: PhysicianRequest; last: boolean; onOpen: (id: number) => void }) {
+function TableNotice({ text, tone }: { text: string; tone?: 'error' }) {
+  return (
+    <div style={{ padding: '40px 24px', textAlign: 'center', fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-body)', color: tone === 'error' ? 'var(--danger-600)' : 'var(--text-faint)' }}>{text}</div>
+  );
+}
+
+function Row({ r, last, onOpen }: { r: PhysicianRequestListItem; last: boolean; onOpen: (id: number) => void }) {
   const [hover, setHover] = useState(false);
   return (
     <div
@@ -139,15 +139,12 @@ function Row({ r, last, onOpen }: { r: PhysicianRequest; last: boolean; onOpen: 
       <span style={{ ...CELL, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-mono)', color: 'var(--text-label)' }}>{r.npi}</span>
       <span style={{ ...CELL, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-mono)', color: 'var(--text-label)' }}>{r.branch}</span>
       <span style={{ ...CELL, color: 'var(--text-label)' }}>{r.degree}</span>
-      <span style={CELL}>{r.physicianType === 'f2f' ? 'F2F Only' : r.physicianType === 'primarySecondary' ? 'Primary/Secondary' : '—'}</span>
+      <span style={CELL}>{PHYSICIAN_TYPE_LABEL[r.physicianType] || '—'}</span>
       <span style={CELL}>{r.vaTricare ? 'Yes' : '—'}</span>
       <span style={CELL}>{r.patientName}</span>
       <span style={{ ...CELL, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-mono)', color: 'var(--text-label)' }}>{r.mrn}</span>
       <span style={CELL}>{r.patientStatus}</span>
-      <div style={{ ...CELL, display: 'flex', flexDirection: 'column' }}>
-        <span style={CELL}>{r.requesterName}</span>
-        <span style={{ ...CELL, fontSize: 'var(--fs-caption)', color: 'var(--text-faint)' }}>{r.requesterEmail}</span>
-      </div>
+      <span style={CELL}>{r.requesterName}</span>
       <StatusBadge status={r.status} style={{ minWidth: 0, whiteSpace: 'normal' }} />
       <span style={{ ...CELL, color: 'var(--text-muted)' }}>{r.created}</span>
     </div>

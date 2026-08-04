@@ -1,120 +1,153 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { AppBar } from './ui/AppBar';
 import { RequestsList } from './screens/RequestsList';
 import { RequestDetail } from './screens/RequestDetail';
 import { RequestForm } from './screens/RequestForm';
 import { ExportDialog } from './screens/ExportDialog';
-import { SEED } from './data/seed';
-import { buildPhysicianXlsx, downloadBlob } from './data/exportXlsx';
-import { EXPORTABLE_STATUSES } from './data/types';
+import { ConfirmDialog } from './screens/ConfirmDialog';
+import { useRequests } from './hooks/useRequests';
+import { useRequest } from './hooks/useRequest';
+import { useBranches } from './hooks/useBranches';
+import {
+  createRequest,
+  deleteRequest,
+  setRequestStatus,
+  updateRequest,
+} from './api/physicianRequests';
+import { exportBatch } from './api/export';
+import { ApiError, errorMessage } from './api/client';
+import { toDraft } from './api/schemas';
+import { TRIGGER_STATUSES } from './data/types';
 import type { PhysicianRequest, RequestDraft, RequestStatus, StatusFilter } from './data/types';
 
 type View = 'list' | 'detail' | 'form';
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-function today() {
-  const d = new Date();
-  return `${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
-}
-
-function exportFilename() {
-  const d = new Date();
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  return `PAT_Export_${d.getFullYear()}-${mm}-${dd}.xlsx`;
-}
-
-function toDraft(r: PhysicianRequest): RequestDraft {
-  return {
-    patientName: r.patientName, mrn: r.mrn, patientStatus: r.patientStatus,
-    requesterName: r.requesterName, requesterEmail: r.requesterEmail,
-    first: r.first, last: r.last, npi: r.npi, degree: r.degree,
-    physicianType: r.physicianType, vaTricare: r.vaTricare, pecosVerified: r.pecosVerified,
-    licenseNumber: r.licenseNumber, licenseState: r.licenseState, licenseExp: r.licenseExp,
-    specialty: r.specialty, taxonomy: r.taxonomy, physicianGroup: r.physicianGroup,
-    vitalAlerts: r.vitalAlerts, orderNotif: r.orderNotif, branch: r.branch,
-    address: r.address, city: r.city, state: r.state, zip: r.zip, phone: r.phone, fax: r.fax,
-    officeVital: r.officeVital, officeOrder: r.officeOrder,
-    officePhysicianGroup: r.officePhysicianGroup,
-    admissionCoordinator: r.admissionCoordinator, additionalDetails: r.additionalDetails,
-  };
-}
+/** Provisional: sale del perfil de Okta cuando se conecte la autenticación. */
+const SUBMITTER = 'I. Brooks';
 
 export function App() {
-  const [requests, setRequests] = useState<PhysicianRequest[]>(SEED);
   const [view, setView] = useState<View>('list');
   const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editing, setEditing] = useState<PhysicianRequest | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [formFieldErrors, setFormFieldErrors] = useState<Record<string, string[]>>({});
+  const [statusPending, setStatusPending] = useState(false);
+  const [emailFailed, setEmailFailed] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [branchFilter, setBranchFilter] = useState('all');
+  const [dataVersion, setDataVersion] = useState(0);
 
-  const selected = requests.find((r) => r.id === selectedId) ?? null;
-  const editing = requests.find((r) => r.id === editingId) ?? null;
-  const exportable = requests.filter((r) => EXPORTABLE_STATUSES.includes(r.status));
+  const list = useRequests(search, statusFilter, branchFilter);
+  const branches = useBranches(dataVersion);
+  const detail = useRequest(view === 'detail' ? selectedId : null);
 
-  const branches = useMemo(
-    () => Array.from(new Set(requests.map((r) => r.branch))).sort(),
-    [requests],
-  );
+  /** Toda mutación invalida la lista y el catálogo de branches. */
+  const invalidate = () => {
+    list.refetch();
+    setDataVersion((version) => version + 1);
+  };
 
-  const visible = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return requests.filter((r) => {
-      const matchesSearch = q === '' || `${r.first} ${r.last}`.toLowerCase().includes(q) || r.npi.includes(q) || r.patientName.toLowerCase().includes(q) || r.mrn.toLowerCase().includes(q);
-      const matchesStatus = statusFilter === 'all' || r.status === statusFilter;
-      const matchesBranch = branchFilter === 'all' || r.branch === branchFilter;
-      return matchesSearch && matchesStatus && matchesBranch;
-    });
-  }, [requests, search, statusFilter, branchFilter]);
-
-  const changeStatus = (id: number, status: RequestStatus) =>
-    setRequests((rs) => rs.map((r) => (r.id === id ? { ...r, status } : r)));
+  const clearFormErrors = () => {
+    setFormError(null);
+    setFormFieldErrors({});
+  };
 
   const openDetail = (id: number) => {
     setSelectedId(id);
+    setEmailFailed(false);
     setView('detail');
   };
 
-  const startCreate = () => {
-    setEditingId(null);
-    setView('form');
-  };
-
-  const startEdit = (id: number) => {
-    setEditingId(id);
-    setView('form');
-  };
-
-  const submitForm = (values: RequestDraft) => {
-    if (editingId !== null) {
-      setRequests((rs) => rs.map((r) => (r.id === editingId ? { ...r, ...values } : r)));
-      setView('list');
-      return;
-    }
-    const id = Math.max(0, ...requests.map((r) => r.id)) + 1;
-    const newRequest: PhysicianRequest = { ...values, id, status: 'newreq', created: today(), submitter: 'I. Brooks' };
-    setRequests((rs) => [newRequest, ...rs]);
+  const goList = () => {
+    clearFormErrors();
     setView('list');
   };
 
-  const confirmExport = async () => {
+  const startCreate = () => {
+    setEditing(null);
+    clearFormErrors();
+    setView('form');
+  };
+
+  const startEdit = () => {
+    setEditing(detail.request);
+    clearFormErrors();
+    setView('form');
+  };
+
+  const changeStatus = async (status: RequestStatus) => {
+    if (selectedId === null) return;
+    setStatusPending(true);
+    setEmailFailed(false);
     try {
-      const blob = await buildPhysicianXlsx(exportable);
-      downloadBlob(blob, exportFilename());
+      const result = await setRequestStatus(selectedId, status);
+      setEmailFailed(TRIGGER_STATUSES.includes(status) && !result.emailSent);
+      detail.refetch();
+      invalidate();
+    } catch (err) {
+      window.alert(errorMessage(err));
     } finally {
+      setStatusPending(false);
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (selectedId === null) return;
+    setDeleting(true);
+    try {
+      await deleteRequest(selectedId);
+      setConfirmingDelete(false);
+      setSelectedId(null);
+      setView('list');
+      invalidate();
+    } catch (err) {
+      window.alert(errorMessage(err));
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const submitForm = async (values: RequestDraft) => {
+    setSubmitting(true);
+    clearFormErrors();
+    try {
+      if (editing) await updateRequest(editing.id, values);
+      if (!editing) await createRequest(values, SUBMITTER);
+      setEditing(null);
+      setView('list');
+      invalidate();
+    } catch (err) {
+      setFormError(errorMessage(err));
+      if (err instanceof ApiError && err.fieldErrors) setFormFieldErrors(err.fieldErrors);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const confirmExport = async () => {
+    setExporting(true);
+    try {
+      const downloaded = await exportBatch();
+      if (!downloaded) window.alert('There is nothing left to export — every clean request was already sent to HCHB.');
+      invalidate();
+    } catch (err) {
+      window.alert(errorMessage(err));
+    } finally {
+      setExporting(false);
       setExportOpen(false);
     }
   };
 
-  const goList = () => setView('list');
-
   let crumb: ReactNode = null;
-  if (view === 'detail' && selected) {
+  if (view === 'detail' && detail.request) {
     crumb = (
-      <><span className="lnk" onClick={goList}>Requests</span><span>/</span><span className="cur">{selected.first} {selected.last}</span></>
+      <><span className="lnk" onClick={goList}>Requests</span><span>/</span><span className="cur">{detail.request.first} {detail.request.last}</span></>
     );
   }
   if (view === 'form') {
@@ -132,9 +165,11 @@ export function App() {
 
       {view === 'list' && (
         <RequestsList
-          requests={visible}
-          totalCount={requests.length}
-          exportableCount={exportable.length}
+          requests={list.items}
+          totalCount={list.totalCount}
+          exportableCount={list.exportableCount}
+          loading={list.loading}
+          error={list.error}
           search={search}
           onSearchChange={setSearch}
           statusFilter={statusFilter}
@@ -148,32 +183,76 @@ export function App() {
         />
       )}
 
-      {view === 'detail' && selected && (
-        <RequestDetail
-          request={selected}
-          onSetStatus={(status) => changeStatus(selected.id, status)}
-          onEdit={() => startEdit(selected.id)}
-        />
+      {view === 'detail' && (
+        <Loader loading={detail.loading} error={detail.error} onRetry={detail.refetch}>
+          {detail.request && (
+            <RequestDetail
+              request={detail.request}
+              statusPending={statusPending}
+              emailFailed={emailFailed}
+              onSetStatus={changeStatus}
+              onEdit={startEdit}
+              onDelete={() => setConfirmingDelete(true)}
+            />
+          )}
+        </Loader>
       )}
 
       {view === 'form' && (
         <RequestForm
           mode={editing ? 'edit' : 'create'}
           values={editing ? toDraft(editing) : undefined}
+          submitting={submitting}
+          error={formError}
+          fieldErrors={formFieldErrors}
           onCancel={goList}
           onSubmit={submitForm}
-          onSaveDraft={submitForm}
+        />
+      )}
+
+      {confirmingDelete && detail.request && (
+        <ConfirmDialog
+          title="Delete request"
+          message={`${detail.request.first} ${detail.request.last} (NPI ${detail.request.npi}) will be removed from the queue. This cannot be undone from the app.`}
+          confirmLabel="Delete request"
+          busy={deleting}
+          onCancel={() => setConfirmingDelete(false)}
+          onConfirm={confirmDelete}
         />
       )}
 
       {exportOpen && (
         <ExportDialog
-          requests={exportable}
-          filename={exportFilename()}
+          count={list.exportableCount}
+          exporting={exporting}
           onCancel={() => setExportOpen(false)}
           onConfirm={confirmExport}
         />
       )}
     </>
+  );
+}
+
+function Loader({ loading, error, onRetry, children }: {
+  loading: boolean;
+  error: string | null;
+  onRetry: () => void;
+  children: ReactNode;
+}) {
+  if (loading) return <Notice text="Loading…" />;
+  if (error) return <Notice text={error} onRetry={onRetry} />;
+  return <>{children}</>;
+}
+
+function Notice({ text, onRetry }: { text: string; onRetry?: () => void }) {
+  return (
+    <div style={{ maxWidth: 'var(--page-max)', margin: '0 auto', padding: '48px var(--page-gutter)', textAlign: 'center', fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-body)', color: 'var(--text-muted)' }}>
+      {text}
+      {onRetry && (
+        <div style={{ marginTop: '12px' }}>
+          <span className="lnk" onClick={onRetry} style={{ cursor: 'pointer', color: 'var(--blue-500)' }}>Retry</span>
+        </div>
+      )}
+    </div>
   );
 }

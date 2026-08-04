@@ -1,28 +1,24 @@
+import { type ReactNode } from 'react';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { Select } from '../ui/Select';
 import { StatusBadge } from '../ui/StatusBadge';
 import { EXPORTABLE_STATUSES, TRIGGER_STATUSES } from '../data/types';
+import { PHYSICIAN_TYPE_LABEL, STATUS_OPTIONS, statusColors, statusMeta } from '../data/labels';
 import type { PhysicianRequest, RequestStatus } from '../data/types';
 
 const EditIcon = (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z" /></svg>
 );
-
-const STATUS_OPTIONS: { value: RequestStatus; label: string }[] = [
-  { value: 'newreq', label: 'New Request' },
-  { value: 'duplicate', label: 'Duplicate Phy/NPI' },
-  { value: 'modify', label: 'Modify Physician' },
-  { value: 'manual', label: 'Manual Entry' },
-  { value: 'special', label: 'Special Approval Requested' },
-  { value: 'denied', label: 'Request Denied' },
-  { value: 'approved', label: 'Request Approved' },
-];
-
-const PHYSICIAN_TYPE_LABEL: Record<string, string> = {
-  f2f: 'F2F Only',
-  primarySecondary: 'Primary/Secondary',
-};
+const TrashIcon = (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+);
+const InfoIcon = (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--blue-500)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: '1px' }}><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></svg>
+);
+const WarnIcon = (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--danger-600)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: '1px' }}><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
+);
 
 function KV({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
@@ -33,19 +29,34 @@ function KV({ label, value, mono }: { label: string; value: string; mono?: boole
   );
 }
 
+function Banner({ icon, children, tone }: { icon: ReactNode; children: ReactNode; tone?: 'warn' }) {
+  return (
+    <div style={{ background: tone === 'warn' ? 'var(--danger-50)' : 'var(--surface-subtle)', border: `1px solid ${tone === 'warn' ? 'var(--danger-border)' : 'var(--border-card)'}`, borderRadius: 'var(--radius-xl)', padding: '20px', display: 'flex', gap: '10px' }}>
+      {icon}
+      <p style={{ margin: 0, fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-mono)', lineHeight: 'var(--lh-body)', color: 'var(--text-label)' }}>
+        {children}
+      </p>
+    </div>
+  );
+}
+
 interface RequestDetailProps {
   request: PhysicianRequest;
+  statusPending: boolean;
+  emailFailed: boolean;
   onSetStatus: (status: RequestStatus) => void;
   onEdit: () => void;
+  onDelete: () => void;
 }
 
 /**
  * RequestDetail — review view. Prominent status, grouped read-only data,
  * a status timeline, and the reviewer's Edit + status disposition controls.
  */
-export function RequestDetail({ request, onSetStatus, onEdit }: RequestDetailProps) {
+export function RequestDetail({ request, statusPending, emailFailed, onSetStatus, onEdit, onDelete }: RequestDetailProps) {
   const r = request;
   const exportable = EXPORTABLE_STATUSES.includes(r.status);
+  const notifies = TRIGGER_STATUSES.includes(r.status);
   return (
     <div style={{ background: 'var(--surface-page)', maxWidth: 'var(--page-max)', margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '28px var(--page-gutter) 24px', background: 'var(--surface-card)', borderBottom: '1px solid var(--border-card)' }}>
@@ -63,13 +74,15 @@ export function RequestDetail({ request, onSetStatus, onEdit }: RequestDetailPro
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <Button variant="danger" size="lg" icon={TrashIcon} onClick={onDelete}>Delete</Button>
           <Button variant="secondary" size="lg" icon={EditIcon} onClick={onEdit}>Edit</Button>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <span style={{ fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-label)', color: 'var(--text-faint)' }}>Set status</span>
+            <span style={{ fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-label)', color: 'var(--text-faint)' }}>{statusPending ? 'Saving status…' : 'Set status'}</span>
             <Select
               value={r.status}
               options={STATUS_OPTIONS}
               placeholder=""
+              disabled={statusPending}
               onChange={(e) => onSetStatus(e.target.value as RequestStatus)}
               style={{ minWidth: '220px' }}
             />
@@ -133,22 +146,23 @@ export function RequestDetail({ request, onSetStatus, onEdit }: RequestDetailPro
           <Card eyebrow="Status">
             <Timeline request={r} exportable={exportable} />
           </Card>
-          {TRIGGER_STATUSES.includes(r.status) && (
-            <div style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border-card)', borderRadius: 'var(--radius-xl)', padding: '20px', display: 'flex', gap: '10px' }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--blue-500)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: '1px' }}><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></svg>
-              <p style={{ margin: 0, fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-mono)', lineHeight: 'var(--lh-body)', color: 'var(--text-label)' }}>
-                {'A response regarding this request will be sent to ' + r.requesterEmail}
-              </p>
-            </div>
+
+          {emailFailed && (
+            <Banner icon={WarnIcon} tone="warn">
+              {`The status was saved, but the notification email to ${r.requesterEmail} could not be sent. Follow up manually.`}
+            </Banner>
           )}
-          <div style={{ background: 'var(--surface-subtle)', border: '1px solid var(--border-card)', borderRadius: 'var(--radius-xl)', padding: '20px', display: 'flex', gap: '10px' }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--blue-500)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: '1px' }}><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></svg>
-            <p style={{ margin: 0, fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-mono)', lineHeight: 'var(--lh-body)', color: 'var(--text-label)' }}>
-              {exportable
-                ? 'New Request, Modify Physician, and Request Approved records are clean and included in the next export batch to HCHB.'
-                : 'This request is held for review. Route it to New Request, Modify Physician, or Request Approved once resolved to include it in the export batch to HCHB.'}
-            </p>
-          </div>
+          {notifies && !emailFailed && (
+            <Banner icon={InfoIcon}>
+              {`A response regarding this request will be sent to ${r.requesterEmail}`}
+            </Banner>
+          )}
+
+          <Banner icon={InfoIcon}>
+            {exportable
+              ? 'New Request, Modify Physician, and Request Approved records are clean and included in the next export batch to HCHB.'
+              : 'This request is held for review. Route it to New Request, Modify Physician, or Request Approved once resolved to include it in the export batch to HCHB.'}
+          </Banner>
         </div>
       </div>
     </div>
@@ -177,29 +191,27 @@ function Step({ color, ring, title, sub, mutedTitle, line = true }: {
   );
 }
 
-const STATUS_META: Record<RequestStatus, { color: string; ring: string; label: string; sub: string }> = {
-  newreq:    { color: 'var(--status-newreq-dot)',    ring: 'var(--status-newreq-bg)',    label: 'New Request',                sub: 'Clean · ready to export' },
-  modify:    { color: 'var(--status-modify-dot)',    ring: 'var(--status-modify-bg)',    label: 'Modify Physician',           sub: 'Clean · ready to export' },
-  approved:  { color: 'var(--status-approved-dot)',  ring: 'var(--status-approved-bg)',  label: 'Request Approved',           sub: 'Approved · ready to export' },
-  duplicate: { color: 'var(--status-duplicate-dot)', ring: 'var(--status-duplicate-bg)', label: 'Duplicate Phy/NPI',          sub: 'Possible duplicate · needs resolution' },
-  manual:    { color: 'var(--status-manual-dot)',    ring: 'var(--status-manual-bg)',    label: 'Manual Entry',               sub: 'Held for a processor' },
-  special:   { color: 'var(--status-special-dot)',   ring: 'var(--status-special-bg)',   label: 'Special Approval Requested', sub: 'Escalated · awaiting sign-off' },
-  denied:    { color: 'var(--status-denied-dot)',    ring: 'var(--status-denied-bg)',    label: 'Request Denied',             sub: 'Denied · requester notified' },
-};
-
 function Timeline({ request, exportable }: { request: PhysicianRequest; exportable: boolean }) {
-  const m = STATUS_META[request.status];
+  const meta = statusMeta(request.status);
+  const colors = statusColors(request.status);
+  const exported = request.exportedAt !== null;
   return (
     <div>
       <Step color="var(--success-500)" title="Submitted" sub={`${request.created} · ${request.submitter}`} />
-      <Step color={m.color} ring={m.ring} title={m.label} sub={m.sub} />
+      <Step color={colors.dot} ring={colors.bg} title={meta.label} sub={meta.sub} />
       <Step
-        color={exportable ? 'var(--status-newreq-dot)' : '#fff'}
-        mutedTitle={!exportable}
+        color={exported || exportable ? 'var(--status-newreq-dot)' : '#fff'}
+        mutedTitle={!exported && !exportable}
         title="Exported to HCHB"
-        sub={exportable ? 'In the next export batch' : 'Once New Request / Modify Physician / Request Approved'}
+        sub={exportSub(exported, exportable)}
         line={false}
       />
     </div>
   );
+}
+
+function exportSub(exported: boolean, exportable: boolean): string {
+  if (exported) return 'Already sent to HCHB';
+  if (exportable) return 'In the next export batch';
+  return 'Once New Request / Modify Physician / Request Approved';
 }
