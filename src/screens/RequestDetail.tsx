@@ -5,8 +5,8 @@ import { Select } from '../ui/Select';
 import { Skeleton } from '../ui/Skeleton';
 import { StatusBadge } from '../ui/StatusBadge';
 import { EXPORTABLE_STATUSES, TRIGGER_STATUSES } from '../data/types';
-import { STATUS_OPTIONS, statusColors, statusMeta } from '../data/labels';
-import { useLabelFor } from '../hooks/useLookups';
+import { statusColors, statusSub } from '../data/labels';
+import { useLabelFor, useStatusOptions } from '../hooks/useLookups';
 import type { PhysicianRequest, RequestStatus } from '../data/types';
 
 const EditIcon = (
@@ -58,6 +58,7 @@ interface RequestDetailProps {
 export function RequestDetail({ request, statusPending, emailFailed, onSetStatus, onEdit, onDelete }: RequestDetailProps) {
   const r = request;
   const labelFor = useLabelFor();
+  const statusOptions = useStatusOptions(r.status);
   const exportable = EXPORTABLE_STATUSES.includes(r.status);
   const notifies = TRIGGER_STATUSES.includes(r.status);
   return (
@@ -66,7 +67,7 @@ export function RequestDetail({ request, statusPending, emailFailed, onSetStatus
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '8px' }}>
             <h1 style={{ margin: 0, fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 'var(--fs-page-title)', color: 'var(--text-heading)', letterSpacing: 'var(--ls-tight)' }}>{r.first} {r.last}, {labelFor('degrees', r.degree)}</h1>
-            <StatusBadge status={r.status} size="md" />
+            <StatusBadge status={r.status} size="md" label={labelFor('requestStatuses', r.status)} />
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '18px', fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-body)', color: 'var(--text-muted)' }}>
             <span>NPI <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-body)' }}>{r.npi}</span></span>
@@ -83,7 +84,7 @@ export function RequestDetail({ request, statusPending, emailFailed, onSetStatus
             <span style={{ fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-label)', color: 'var(--text-faint)' }}>{statusPending ? 'Saving status…' : 'Set status'}</span>
             <Select
               value={r.status}
-              options={STATUS_OPTIONS}
+              options={statusOptions}
               placeholder=""
               disabled={statusPending}
               onChange={(e) => onSetStatus(e.target.value as RequestStatus)}
@@ -268,13 +269,13 @@ function Step({ color, ring, title, sub, mutedTitle, line = true }: {
 }
 
 function Timeline({ request, exportable }: { request: PhysicianRequest; exportable: boolean }) {
-  const meta = statusMeta(request.status);
+  const labelFor = useLabelFor();
   const colors = statusColors(request.status);
   const exported = request.exportedAt !== null;
   return (
     <div>
       <Step color="var(--success-500)" title="Submitted" sub={`${request.created} · ${request.submitter}`} />
-      <Step color={colors.dot} ring={colors.bg} title={meta.label} sub={meta.sub} />
+      <Step color={colors.dot} ring={colors.bg} title={labelFor('requestStatuses', request.status)} sub={statusSub(request.status)} />
       <Step
         color={exported || exportable ? 'var(--status-newreq-dot)' : '#fff'}
         mutedTitle={!exported && !exportable}

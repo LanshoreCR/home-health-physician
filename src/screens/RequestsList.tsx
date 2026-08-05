@@ -2,8 +2,7 @@ import { useState, type CSSProperties } from 'react';
 import { Button } from '../ui/Button';
 import { Skeleton } from '../ui/Skeleton';
 import { StatusBadge } from '../ui/StatusBadge';
-import { STATUS_FILTER_OPTIONS } from '../data/labels';
-import { useLabelFor } from '../hooks/useLookups';
+import { useLabelFor, useStatusFilterOptions } from '../hooks/useLookups';
 import type { PhysicianRequestListItem, StatusFilter } from '../data/types';
 
 const DownloadIcon = (
@@ -53,6 +52,7 @@ export function RequestsList({
   onOpen, onNew, onExport,
 }: RequestsListProps) {
   const branchOptions = [{ value: 'all', label: 'All' }, ...branches.map((b) => ({ value: b, label: b }))];
+  const statusOptions = useStatusFilterOptions();
   return (
     <div style={{ background: 'var(--surface-page)', maxWidth: 'var(--page-max)', margin: '0 auto' }}>
       <div style={{ padding: '28px var(--page-gutter) 36px' }}>
@@ -77,7 +77,7 @@ export function RequestsList({
               style={{ width: '100%', height: 'var(--control-h)', padding: '0 12px 0 36px', background: 'var(--surface-card)', border: '1px solid var(--border-field)', borderRadius: 'var(--radius-md)', fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-body)', color: 'var(--text-body)', outline: 'none', boxSizing: 'border-box' }}
             />
           </div>
-          <FilterSelect label="Status" value={statusFilter} options={STATUS_FILTER_OPTIONS} onChange={(v) => onStatusFilterChange(v as StatusFilter)} />
+          <FilterSelect label="Status" value={statusFilter} options={statusOptions} onChange={(v) => onStatusFilterChange(v as StatusFilter)} />
           <FilterSelect label="Branch" value={branchFilter} options={branchOptions} onChange={onBranchFilterChange} />
         </div>
 
@@ -172,7 +172,7 @@ function Row({ r, last, onOpen }: { r: PhysicianRequestListItem; last: boolean; 
       <span style={{ ...CELL, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-mono)', color: 'var(--text-label)' }}>{r.mrn}</span>
       <span style={CELL}>{labelFor('patientStatuses', r.patientStatus)}</span>
       <span style={CELL}>{r.requesterName}</span>
-      <StatusBadge status={r.status} style={{ minWidth: 0, whiteSpace: 'normal' }} />
+      <StatusBadge status={r.status} label={labelFor('requestStatuses', r.status)} style={{ minWidth: 0, whiteSpace: 'normal' }} />
       <span style={{ ...CELL, color: 'var(--text-muted)' }}>{r.created}</span>
     </div>
   );

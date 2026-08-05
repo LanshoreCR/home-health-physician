@@ -17,7 +17,6 @@ import { Checkbox } from '../ui/Checkbox';
 import { Skeleton } from '../ui/Skeleton';
 import { useLookups } from '../hooks/useLookups';
 import { saveRequestSchema, toOptions, validateDraft } from '../api/schemas';
-import { PHYSICIAN_TYPE_LABEL } from '../data/labels';
 import type { RequestDraft } from '../data/types';
 
 const EMPTY: RequestDraft = {
@@ -212,8 +211,14 @@ export function RequestForm({ mode, values, submitting, error, fieldErrors, onCa
               <FormField name="physicianType" label="Physician type" required hint="Choose one" style={{ gridColumn: '1 / -1' }}>
                 {(field) => (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px 48px', alignItems: 'center' }}>
-                    <Checkbox label={PHYSICIAN_TYPE_LABEL.f2f} checked={field.value === 'f2f'} onChange={(checked) => field.onChange(checked ? 'f2f' : '')} />
-                    <Checkbox label={PHYSICIAN_TYPE_LABEL.primarySecondary} checked={field.value === 'primarySecondary'} onChange={(checked) => field.onChange(checked ? 'primarySecondary' : '')} />
+                    {toOptions(lookups.physicianTypes).map((option) => (
+                      <Checkbox
+                        key={option.value}
+                        label={option.label}
+                        checked={field.value === option.value}
+                        onChange={(checked) => field.onChange(checked ? option.value : '')}
+                      />
+                    ))}
                   </div>
                 )}
               </FormField>
