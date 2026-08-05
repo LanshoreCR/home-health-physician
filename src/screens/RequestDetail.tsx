@@ -5,7 +5,8 @@ import { Select } from '../ui/Select';
 import { Skeleton } from '../ui/Skeleton';
 import { StatusBadge } from '../ui/StatusBadge';
 import { EXPORTABLE_STATUSES, TRIGGER_STATUSES } from '../data/types';
-import { PHYSICIAN_TYPE_LABEL, STATUS_OPTIONS, statusColors, statusMeta } from '../data/labels';
+import { STATUS_OPTIONS, statusColors, statusMeta } from '../data/labels';
+import { useLabelFor } from '../hooks/useLookups';
 import type { PhysicianRequest, RequestStatus } from '../data/types';
 
 const EditIcon = (
@@ -56,6 +57,7 @@ interface RequestDetailProps {
  */
 export function RequestDetail({ request, statusPending, emailFailed, onSetStatus, onEdit, onDelete }: RequestDetailProps) {
   const r = request;
+  const labelFor = useLabelFor();
   const exportable = EXPORTABLE_STATUSES.includes(r.status);
   const notifies = TRIGGER_STATUSES.includes(r.status);
   return (
@@ -63,7 +65,7 @@ export function RequestDetail({ request, statusPending, emailFailed, onSetStatus
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '28px var(--page-gutter) 24px', background: 'var(--surface-card)', borderBottom: '1px solid var(--border-card)' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '8px' }}>
-            <h1 style={{ margin: 0, fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 'var(--fs-page-title)', color: 'var(--text-heading)', letterSpacing: 'var(--ls-tight)' }}>{r.first} {r.last}, {r.degree}</h1>
+            <h1 style={{ margin: 0, fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 'var(--fs-page-title)', color: 'var(--text-heading)', letterSpacing: 'var(--ls-tight)' }}>{r.first} {r.last}, {labelFor('degrees', r.degree)}</h1>
             <StatusBadge status={r.status} size="md" />
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '18px', fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-body)', color: 'var(--text-muted)' }}>
@@ -97,7 +99,7 @@ export function RequestDetail({ request, statusPending, emailFailed, onSetStatus
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
               <KV label="Patient name" value={r.patientName} />
               <KV label="MRN" value={r.mrn} mono />
-              <KV label="Patient status" value={r.patientStatus} />
+              <KV label="Patient status" value={labelFor('patientStatuses', r.patientStatus)} />
               <KV label="Requester" value={r.requesterName} />
               <KV label="Requester email" value={r.requesterEmail} />
             </div>
@@ -106,14 +108,14 @@ export function RequestDetail({ request, statusPending, emailFailed, onSetStatus
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
               <KV label="First name" value={r.first} />
               <KV label="Last name" value={r.last} />
-              <KV label="Degree" value={r.degree} />
+              <KV label="Degree" value={labelFor('degrees', r.degree)} />
               <KV label="Branch code" value={r.branch} mono />
               <KV label="NPI number" value={r.npi} mono />
-              <KV label="Physician type" value={PHYSICIAN_TYPE_LABEL[r.physicianType] || '—'} />
+              <KV label="Physician type" value={labelFor('physicianTypes', r.physicianType)} />
               <KV label="VA/Tricare" value={r.vaTricare ? 'Yes' : 'No'} />
               <KV label="Pecos verified" value={r.pecosVerified ? 'Yes' : 'No'} />
               <KV label="License number" value={r.licenseNumber} />
-              <KV label="License state" value={r.licenseState} />
+              <KV label="License state" value={labelFor('states', r.licenseState)} />
               <KV label="License expiration" value={r.licenseExp} />
               <KV label="Specialty" value={r.specialty} />
               <KV label="Taxonomy" value={r.taxonomy} />
@@ -122,20 +124,20 @@ export function RequestDetail({ request, statusPending, emailFailed, onSetStatus
           </Card>
           <Card eyebrow="Notifications">
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-              <KV label="Preferred vital sign alerts" value={r.vitalAlerts} />
-              <KV label="New order notification" value={r.orderNotif} />
+              <KV label="Preferred vital sign alerts" value={labelFor('vitalAlertMethods', r.vitalAlerts)} />
+              <KV label="New order notification" value={labelFor('orderNotifMethods', r.orderNotif)} />
             </div>
           </Card>
           <Card eyebrow="Physician's office">
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
               <div style={{ gridColumn: '1 / -1' }}><KV label="Address" value={r.address} /></div>
               <KV label="City" value={r.city} />
-              <KV label="State" value={r.state} />
+              <KV label="State" value={labelFor('states', r.state)} />
               <KV label="Zip code" value={r.zip} mono />
               <KV label="Phone" value={r.phone} mono />
               <KV label="Fax" value={r.fax} mono />
-              <KV label="Vital sign alerts to office" value={r.officeVital} />
-              <KV label="New order notification to office" value={r.officeOrder} />
+              <KV label="Vital sign alerts to office" value={labelFor('vitalAlertMethods', r.officeVital)} />
+              <KV label="New order notification to office" value={labelFor('orderNotifMethods', r.officeOrder)} />
               <KV label="Admission coordinator" value={r.admissionCoordinator} />
               <KV label="Physician group" value={r.officePhysicianGroup} />
               <div style={{ gridColumn: '1 / -1' }}><KV label="Additional details" value={r.additionalDetails} /></div>

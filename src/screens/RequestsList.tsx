@@ -2,7 +2,8 @@ import { useState, type CSSProperties } from 'react';
 import { Button } from '../ui/Button';
 import { Skeleton } from '../ui/Skeleton';
 import { StatusBadge } from '../ui/StatusBadge';
-import { PHYSICIAN_TYPE_LABEL, STATUS_FILTER_OPTIONS } from '../data/labels';
+import { STATUS_FILTER_OPTIONS } from '../data/labels';
+import { useLabelFor } from '../hooks/useLookups';
 import type { PhysicianRequestListItem, StatusFilter } from '../data/types';
 
 const DownloadIcon = (
@@ -153,6 +154,7 @@ function TableNotice({ text, tone }: { text: string; tone?: 'error' }) {
 
 function Row({ r, last, onOpen }: { r: PhysicianRequestListItem; last: boolean; onOpen: (id: number) => void }) {
   const [hover, setHover] = useState(false);
+  const labelFor = useLabelFor();
   return (
     <div
       onClick={() => onOpen(r.id)}
@@ -163,12 +165,12 @@ function Row({ r, last, onOpen }: { r: PhysicianRequestListItem; last: boolean; 
       <span style={{ ...CELL, fontWeight: 600 }}>{r.first} {r.last}</span>
       <span style={{ ...CELL, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-mono)', color: 'var(--text-label)' }}>{r.npi}</span>
       <span style={{ ...CELL, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-mono)', color: 'var(--text-label)' }}>{r.branch}</span>
-      <span style={{ ...CELL, color: 'var(--text-label)' }}>{r.degree}</span>
-      <span style={CELL}>{PHYSICIAN_TYPE_LABEL[r.physicianType] || '—'}</span>
+      <span style={{ ...CELL, color: 'var(--text-label)' }}>{labelFor('degrees', r.degree)}</span>
+      <span style={CELL}>{labelFor('physicianTypes', r.physicianType) || '—'}</span>
       <span style={CELL}>{r.vaTricare ? 'Yes' : '—'}</span>
       <span style={CELL}>{r.patientName}</span>
       <span style={{ ...CELL, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-mono)', color: 'var(--text-label)' }}>{r.mrn}</span>
-      <span style={CELL}>{r.patientStatus}</span>
+      <span style={CELL}>{labelFor('patientStatuses', r.patientStatus)}</span>
       <span style={CELL}>{r.requesterName}</span>
       <StatusBadge status={r.status} style={{ minWidth: 0, whiteSpace: 'normal' }} />
       <span style={{ ...CELL, color: 'var(--text-muted)' }}>{r.created}</span>
