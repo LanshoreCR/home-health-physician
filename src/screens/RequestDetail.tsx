@@ -6,7 +6,7 @@ import { Skeleton } from '../ui/Skeleton';
 import { StatusBadge } from '../ui/StatusBadge';
 import { EXPORTABLE_STATUSES, TRIGGER_STATUSES } from '../data/types';
 import { statusColors, statusSub } from '../data/labels';
-import { useLabelFor, useStatusOptions } from '../hooks/useLookups';
+import { useLabelFor, useLookups, useStatusOptions } from '../hooks/useLookups';
 import type { PhysicianRequest, RequestStatus } from '../data/types';
 
 const EditIcon = (
@@ -21,6 +21,12 @@ const InfoIcon = (
 const WarnIcon = (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--danger-600)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: '1px' }}><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
 );
+
+/** "A, B, and C" — coma de Oxford, como estaba escrito el copy a mano. */
+function joinList(items: string[], conjunction: string): string {
+  if (items.length < 2) return items.join('');
+  return `${items.slice(0, -1).join(', ')}, ${conjunction} ${items[items.length - 1]}`;
+}
 
 function KV({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
@@ -57,8 +63,11 @@ interface RequestDetailProps {
  */
 export function RequestDetail({ request, statusPending, emailFailed, onSetStatus, onEdit, onDelete }: RequestDetailProps) {
   const r = request;
+  const { lookups } = useLookups();
   const labelFor = useLabelFor();
   const statusOptions = useStatusOptions(r.status);
+  const exportableLabels = (conjunction: string) =>
+    joinList(EXPORTABLE_STATUSES.map((status) => labelFor('requestStatuses', status)), conjunction);
   const exportable = EXPORTABLE_STATUSES.includes(r.status);
   const notifies = TRIGGER_STATUSES.includes(r.status);
   return (
@@ -86,7 +95,7 @@ export function RequestDetail({ request, statusPending, emailFailed, onSetStatus
               value={r.status}
               options={statusOptions}
               placeholder=""
-              disabled={statusPending}
+              disabled={statusPending || !lookups}
               onChange={(e) => onSetStatus(e.target.value as RequestStatus)}
               style={{ minWidth: '220px' }}
             />
@@ -164,8 +173,8 @@ export function RequestDetail({ request, statusPending, emailFailed, onSetStatus
 
           <Banner icon={InfoIcon}>
             {exportable
-              ? 'New Request, Modify Physician, and Request Approved records are clean and included in the next export batch to HCHB.'
-              : 'This request is held for review. Route it to New Request, Modify Physician, or Request Approved once resolved to include it in the export batch to HCHB.'}
+              ? `${exportableLabels('and')} records are clean and included in the next export batch to HCHB.`
+              : `This request is held for review. Route it to ${exportableLabels('or')} once resolved to include it in the export batch to HCHB.`}
           </Banner>
         </div>
       </div>
