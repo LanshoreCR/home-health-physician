@@ -8,6 +8,7 @@ import { ConfirmDialog } from './screens/ConfirmDialog';
 import { useRequests } from './hooks/useRequests';
 import { useRequest } from './hooks/useRequest';
 import { useBranches } from './hooks/useBranches';
+import { useCatalogsStore } from './store/catalogs';
 import {
   createRequest,
   deleteRequest,
@@ -41,16 +42,15 @@ export function App() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [branchFilter, setBranchFilter] = useState('all');
-  const [dataVersion, setDataVersion] = useState(0);
 
   const list = useRequests(search, statusFilter, branchFilter);
-  const branches = useBranches(dataVersion);
+  const branches = useBranches();
   const detail = useRequest(view === 'detail' ? selectedId : null);
 
   /** Toda mutación invalida la lista y el catálogo de branches. */
   const invalidate = () => {
     list.refetch();
-    setDataVersion((version) => version + 1);
+    void useCatalogsStore.getState().refreshBranches();
   };
 
   const clearFormErrors = () => {

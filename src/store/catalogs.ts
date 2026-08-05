@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { errorMessage } from '../api/client';
 import { getLookups } from '../api/lookups';
+import { listBranches } from '../api/physicianRequests';
 import { lookupsSchema } from '../api/schemas';
 import type { LookupItem, Lookups } from '../api/schemas';
 
@@ -28,13 +29,17 @@ function validCache(persisted: unknown): Cache {
 
 interface CatalogsState extends Cache {
   error: string | null;
+  /** No es un catálogo: sale de las requests vivas, así que no se persiste. */
+  branches: string[];
   /** Pide los catálogos solo si no hay caché fresca. */
   loadLookups: () => Promise<void>;
   /** Los pide siempre — el Retry del form y cualquier invalidación explícita. */
   refreshLookups: () => Promise<void>;
+  refreshBranches: () => Promise<void>;
 }
 
 let lookupsInFlight: Promise<void> | null = null;
+let branchesInFlight: Promise<void> | null = null;
 
 /**
  * Catálogos del backend. Se persisten en localStorage con un TTL para que la
@@ -48,6 +53,7 @@ export const useCatalogsStore = create<CatalogsState>()(
     (set, get) => ({
       ...EMPTY_CACHE,
       error: null,
+      branches: [],
 
       refreshLookups: () => {
         if (lookupsInFlight) return lookupsInFlight;
@@ -81,6 +87,24 @@ export const useCatalogsStore = create<CatalogsState>()(
         return get().refreshLookups();
       },
 
+      /** Degrada a "All" si falla: el filtro de branch no vale bloquear la lista. */
+      refreshBranches: () => {
+        if (branchesInFlight) return branchesInFlight;
+
+        const request: Promise<void> = listBranches()
+          .then((branches) => {
+            set({ branches });
+          })
+          .catch((err: unknown) => {
+            console.warn('[api] listBranches failed', err);
+          })
+          .finally(() => {
+            branchesInFlight = null;
+          });
+
+        branchesInFlight = request;
+        return request;
+      },
     }),
     {
       name: 'hhp-catalogs',
@@ -95,7 +119,9 @@ export const useCatalogsStore = create<CatalogsState>()(
 
 /** Se llama una vez en el bootstrap: a nivel de módulo StrictMode no lo duplica. */
 export function loadCatalogs() {
-  void useCatalogsStore.getState().loadLookups();
+  const { loadLookups, refreshBranches } = useCatalogsStore.getState();
+  void loadLookups();
+  void refreshBranches();
 }
 
 export function catalogFrom(lookups: Lookups | null, name: CatalogName): LookupItem[] {
