@@ -149,7 +149,8 @@ export function RequestForm({ mode, values, submitting, error, fieldErrors, onCa
   const phoneChange = <K extends DraftKey>(field: ControllerRenderProps<RequestDraft, K>) =>
     (e: ChangeEvent<HTMLInputElement>) => field.onChange(formatPhone(e.target.value));
 
-  if (lookupsError) {
+  /** Un refresh de fondo que falla no debe blanquear un form que ya tiene catálogos. */
+  if (lookupsError && !lookups) {
     return (
       <Centered>
         <div style={{ color: 'var(--danger-600)', marginBottom: '12px' }}>{lookupsError}</div>
