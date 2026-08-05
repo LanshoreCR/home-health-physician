@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { AppBar } from './ui/AppBar';
 import { RequestsList } from './screens/RequestsList';
-import { RequestDetail } from './screens/RequestDetail';
+import { DetailSkeleton, RequestDetail } from './screens/RequestDetail';
 import { RequestForm } from './screens/RequestForm';
 import { ExportDialog } from './screens/ExportDialog';
 import { ConfirmDialog } from './screens/ConfirmDialog';
@@ -239,7 +239,7 @@ function Loader({ loading, error, onRetry, children }: {
   onRetry: () => void;
   children: ReactNode;
 }) {
-  if (loading) return <Notice text="Loading…" />;
+  if (loading) return <DetailSkeleton />;
   if (error) return <Notice text={error} onRetry={onRetry} />;
   return <>{children}</>;
 }

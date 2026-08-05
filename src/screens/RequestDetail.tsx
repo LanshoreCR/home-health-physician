@@ -2,6 +2,7 @@ import { type ReactNode } from 'react';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { Select } from '../ui/Select';
+import { Skeleton } from '../ui/Skeleton';
 import { StatusBadge } from '../ui/StatusBadge';
 import { EXPORTABLE_STATUSES, TRIGGER_STATUSES } from '../data/types';
 import { PHYSICIAN_TYPE_LABEL, STATUS_OPTIONS, statusColors, statusMeta } from '../data/labels';
@@ -163,6 +164,79 @@ export function RequestDetail({ request, statusPending, emailFailed, onSetStatus
               ? 'New Request, Modify Physician, and Request Approved records are clean and included in the next export batch to HCHB.'
               : 'This request is held for review. Route it to New Request, Modify Physician, or Request Approved once resolved to include it in the export batch to HCHB.'}
           </Banner>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function KVSkeleton() {
+  return (
+    <div>
+      <Skeleton w="58%" h={11} style={{ marginBottom: '8px' }} />
+      <Skeleton w="82%" h={16} />
+    </div>
+  );
+}
+
+function CardSkeleton({ fields, cols = 3 }: { fields: number; cols?: number }) {
+  return (
+    <Card>
+      <Skeleton w={140} h={11} style={{ marginBottom: '18px' }} />
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: '20px' }}>
+        {Array.from({ length: fields }, (_, i) => <KVSkeleton key={i} />)}
+      </div>
+    </Card>
+  );
+}
+
+/** Calcado del layout de RequestDetail para que no haya salto al llegar los datos. */
+export function DetailSkeleton() {
+  return (
+    <div style={{ background: 'var(--surface-page)', maxWidth: 'var(--page-max)', margin: '0 auto' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '28px var(--page-gutter) 24px', background: 'var(--surface-card)', borderBottom: '1px solid var(--border-card)' }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '12px' }}>
+            <Skeleton w={280} h={28} radius="var(--radius-md)" />
+            <Skeleton w={120} h={26} radius="var(--radius-pill)" />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
+            <Skeleton w={130} h={14} />
+            <Skeleton w={150} h={14} />
+            <Skeleton w={140} h={14} />
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <Skeleton w={104} h={42} radius="var(--radius-md)" />
+          <Skeleton w={90} h={42} radius="var(--radius-md)" />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <Skeleton w={64} h={11} />
+            <Skeleton w={220} h={44} radius="var(--radius-md)" />
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '24px', padding: '28px var(--page-gutter) 36px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+          <CardSkeleton fields={5} />
+          <CardSkeleton fields={14} />
+          <CardSkeleton fields={2} cols={2} />
+          <CardSkeleton fields={11} />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+          <Card>
+            <Skeleton w={80} h={11} style={{ marginBottom: '18px' }} />
+            {[0, 1, 2].map((i) => (
+              <div key={i} style={{ display: 'flex', gap: '12px', paddingBottom: i === 2 ? 0 : '18px' }}>
+                <Skeleton w={11} h={11} radius="50%" style={{ marginTop: '4px' }} />
+                <div style={{ flex: 1 }}>
+                  <Skeleton w="52%" h={14} style={{ marginBottom: '6px' }} />
+                  <Skeleton w="74%" h={11} />
+                </div>
+              </div>
+            ))}
+          </Card>
+          <Skeleton h={104} radius="var(--radius-xl)" />
         </div>
       </div>
     </div>

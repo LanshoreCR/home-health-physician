@@ -1,5 +1,6 @@
 import { useState, type CSSProperties } from 'react';
 import { Button } from '../ui/Button';
+import { Skeleton } from '../ui/Skeleton';
 import { StatusBadge } from '../ui/StatusBadge';
 import { PHYSICIAN_TYPE_LABEL, STATUS_FILTER_OPTIONS } from '../data/labels';
 import type { PhysicianRequestListItem, StatusFilter } from '../data/types';
@@ -84,7 +85,7 @@ export function RequestsList({
             <div style={{ display: 'grid', gridTemplateColumns: COLS, gap: '16px', padding: '14px 24px', background: 'var(--surface-subtle)', borderBottom: '1px solid var(--border-card)', fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 600, letterSpacing: 'var(--ls-eyebrow)', textTransform: 'uppercase', color: 'var(--text-faint)' }}>
               {HEADERS.map((h) => <span key={h} style={CELL}>{h}</span>)}
             </div>
-            {loading && <TableNotice text="Loading requests…" />}
+            {loading && <TableSkeleton />}
             {!loading && error && <TableNotice text={error} tone="error" />}
             {!loading && !error && requests.length === 0 && (
               <TableNotice text="No requests match your filters." />
@@ -117,6 +118,30 @@ function FilterSelect({ label, value, options, onChange }: {
       </select>
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--slate-400)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ pointerEvents: 'none', flexShrink: 0 }}><polyline points="6 9 12 15 18 9" /></svg>
     </div>
+  );
+}
+
+const SKELETON_ROWS = 8;
+/** Un ancho por columna de HEADERS, para que las filas fantasma no queden todas iguales. */
+const SKELETON_WIDTHS = ['64%', '52%', '46%', '34%', '58%', '30%', '70%', '48%', '56%', '62%', '78%', '50%'];
+const STATUS_COL = 10;
+
+function TableSkeleton() {
+  return (
+    <>
+      {Array.from({ length: SKELETON_ROWS }, (_, row) => (
+        <div
+          key={row}
+          style={{ display: 'grid', gridTemplateColumns: COLS, gap: '16px', padding: '18px 24px', alignItems: 'center', borderBottom: row === SKELETON_ROWS - 1 ? 'none' : '1px solid var(--border-divider)' }}
+        >
+          {SKELETON_WIDTHS.map((w, col) => (
+            col === STATUS_COL
+              ? <Skeleton key={col} w={w} h={24} radius="var(--radius-pill)" />
+              : <Skeleton key={col} w={w} />
+          ))}
+        </div>
+      ))}
+    </>
   );
 }
 

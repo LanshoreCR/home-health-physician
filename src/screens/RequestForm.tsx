@@ -14,6 +14,7 @@ import { Field } from '../ui/Field';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { Checkbox } from '../ui/Checkbox';
+import { Skeleton } from '../ui/Skeleton';
 import { useLookups } from '../hooks/useLookups';
 import { saveRequestSchema, toOptions, validateDraft } from '../api/schemas';
 import { PHYSICIAN_TYPE_LABEL } from '../data/labels';
@@ -157,7 +158,7 @@ export function RequestForm({ mode, values, submitting, error, fieldErrors, onCa
     );
   }
 
-  if (!lookups) return <Centered>Loading form…</Centered>;
+  if (!lookups) return <FormSkeleton />;
 
   return (
     <FormProvider {...form}>
@@ -320,6 +321,51 @@ export function RequestForm({ mode, values, submitting, error, fieldErrors, onCa
         </div>
       </div>
     </FormProvider>
+  );
+}
+
+function FieldSkeleton() {
+  return (
+    <div>
+      <Skeleton w="46%" h={12} style={{ marginBottom: '6px' }} />
+      <Skeleton h="var(--input-h)" radius="var(--radius-md)" />
+    </div>
+  );
+}
+
+function CardSkeleton({ fields }: { fields: number }) {
+  return (
+    <Card style={{ marginBottom: 'var(--section-gap)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+        <Skeleton w={24} h={24} radius="var(--radius-sm)" />
+        <Skeleton w={190} h={17} />
+      </div>
+      <div className="form-grid">
+        {Array.from({ length: fields }, (_, i) => <FieldSkeleton key={i} />)}
+      </div>
+    </Card>
+  );
+}
+
+/** Calcado del layout del form (3 cards + footer sticky) mientras cargan los lookups. */
+function FormSkeleton() {
+  return (
+    <div style={{ background: 'var(--surface-page)', position: 'relative', maxWidth: 'var(--page-max)', margin: '0 auto' }}>
+      <div style={{ padding: '28px var(--page-gutter) 0' }}>
+        <Skeleton w={340} h={26} radius="var(--radius-md)" style={{ marginBottom: '10px' }} />
+        <Skeleton w={480} h={14} style={{ marginBottom: '26px' }} />
+        <CardSkeleton fields={6} />
+        <CardSkeleton fields={12} />
+        <CardSkeleton fields={12} />
+      </div>
+      <div style={{ position: 'sticky', bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px var(--page-gutter)', background: 'rgba(255,255,255,.92)', backdropFilter: 'blur(6px)', borderTop: '1px solid var(--border-card)' }}>
+        <Skeleton w={150} h={13} />
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <Skeleton w={84} h="var(--control-h)" radius="var(--radius-md)" />
+          <Skeleton w={140} h="var(--control-h)" radius="var(--radius-md)" />
+        </div>
+      </div>
+    </div>
   );
 }
 

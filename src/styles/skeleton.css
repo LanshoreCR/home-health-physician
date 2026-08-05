@@ -1,0 +1,19 @@
+/* Skeleton placeholders — shimmer keyframes for <Skeleton /> (src/ui/Skeleton.tsx). */
+.skeleton {
+  display: block;
+  flex-shrink: 0;
+  background-color: var(--slate-100);
+  background-image: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.85), transparent);
+  background-repeat: no-repeat;
+  background-size: 240px 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+  from { background-position: -240px 0; }
+  to   { background-position: calc(100% + 240px) 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; }
+}
