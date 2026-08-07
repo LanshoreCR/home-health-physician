@@ -23,3 +23,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Bun is the package manager here; npm/yarn lockfiles are noise.
+package-lock.json
+yarn.lock
+pnpm-lock.yaml

@@ -1,13 +1,14 @@
 import { useState, type ReactNode } from 'react';
 import { AppBar } from './ui/AppBar';
 import { RequestsList } from './screens/RequestsList';
-import { RequestDetail } from './screens/RequestDetail';
+import { DetailSkeleton, RequestDetail } from './screens/RequestDetail';
 import { RequestForm } from './screens/RequestForm';
 import { ExportDialog } from './screens/ExportDialog';
 import { ConfirmDialog } from './screens/ConfirmDialog';
 import { useRequests } from './hooks/useRequests';
 import { useRequest } from './hooks/useRequest';
 import { useBranches } from './hooks/useBranches';
+import { useCatalogsStore } from './store/catalogs';
 import {
   createRequest,
   deleteRequest,
@@ -41,16 +42,15 @@ export function App() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [branchFilter, setBranchFilter] = useState('all');
-  const [dataVersion, setDataVersion] = useState(0);
 
   const list = useRequests(search, statusFilter, branchFilter);
-  const branches = useBranches(dataVersion);
+  const branches = useBranches();
   const detail = useRequest(view === 'detail' ? selectedId : null);
 
   /** Toda mutación invalida la lista y el catálogo de branches. */
   const invalidate = () => {
     list.refetch();
-    setDataVersion((version) => version + 1);
+    void useCatalogsStore.getState().refreshBranches();
   };
 
   const clearFormErrors = () => {
@@ -239,7 +239,7 @@ function Loader({ loading, error, onRetry, children }: {
   onRetry: () => void;
   children: ReactNode;
 }) {
-  if (loading) return <Notice text="Loading…" />;
+  if (loading) return <DetailSkeleton />;
   if (error) return <Notice text={error} onRetry={onRetry} />;
   return <>{children}</>;
 }

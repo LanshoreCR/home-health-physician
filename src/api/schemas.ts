@@ -116,6 +116,16 @@ const optional = (max: number) =>
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
+/** Tope propio del cliente para texto libre: más estricto que el DataAnnotation del backend. */
+const TEXT_MAX = 50;
+
+/**
+ * String y no z.enum a propósito: el resto del contrato tipa physicianType como
+ * string y el form arranca en '', así que la entrada del schema tiene que ser
+ * el mismo string que el estado del form.
+ */
+const PHYSICIAN_TYPES = ['f2f', 'primarySecondary'];
+
 /**
  * Espejo de los DataAnnotations de SavePhysicianRequestRequest. La entrada es
  * el estado del form (todo string, '' cuando está vacío); la salida es el body
@@ -123,18 +133,18 @@ const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
  * devuelve 400 porque en el backend es DateTime?.
  */
 export const saveRequestSchema = z.object({
-  patientName: required(200),
+  patientName: required(TEXT_MAX),
   mrn: required(50),
   patientStatus: required(20),
-  requesterName: required(200),
+  requesterName: required(TEXT_MAX),
   requesterEmail: required(256).pipe(z.email('Enter a valid email address')),
-  first: required(100),
-  last: required(100),
+  first: required(TEXT_MAX),
+  last: required(TEXT_MAX),
   npi: z.string().trim().regex(/^\d{10}$/, 'NPI must be 10 digits'),
   degree: required(20),
-  physicianType: z.enum(['f2f', 'primarySecondary'], {
-    error: 'Select F2F Only or Primary/Secondary',
-  }),
+  physicianType: z
+    .string()
+    .refine((v) => PHYSICIAN_TYPES.includes(v), 'Select F2F Only or Primary/Secondary'),
   vaTricare: z.boolean(),
   pecosVerified: z.boolean(),
   licenseNumber: optional(50),
@@ -144,22 +154,22 @@ export const saveRequestSchema = z.object({
     .trim()
     .refine((v) => v === '' || ISO_DATE.test(v), 'Use the YYYY-MM-DD format')
     .transform(emptyToNull),
-  specialty: optional(100),
+  specialty: optional(TEXT_MAX),
   taxonomy: optional(20),
-  physicianGroup: optional(200),
+  physicianGroup: optional(TEXT_MAX),
   vitalAlerts: required(20),
   orderNotif: required(20),
   branch: required(20),
-  address: required(200),
-  city: required(100),
+  address: required(TEXT_MAX),
+  city: required(TEXT_MAX),
   state: required(20),
   zip: required(10),
   phone: required(12),
   fax: required(12),
   officeVital: optional(20),
   officeOrder: optional(20),
-  officePhysicianGroup: optional(200),
-  admissionCoordinator: optional(200),
+  officePhysicianGroup: optional(TEXT_MAX),
+  admissionCoordinator: optional(TEXT_MAX),
   additionalDetails: z.string().trim().transform(emptyToNull),
 });
 

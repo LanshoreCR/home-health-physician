@@ -1,5 +1,5 @@
 import { type CSSProperties } from 'react';
-import { statusColors, statusMeta } from '../data/labels';
+import { statusColors } from '../data/labels';
 import type { RequestStatus } from '../data/types';
 
 interface StatusBadgeProps {
@@ -7,7 +7,7 @@ interface StatusBadgeProps {
   status?: RequestStatus;
   /** sm for table rows, md for the detail header. @default 'sm' */
   size?: 'sm' | 'md';
-  /** Override the default label text for the status. */
+  /** Display text for the status; falls back to the raw code. */
   label?: string;
   style?: CSSProperties;
 }
@@ -36,7 +36,7 @@ export function StatusBadge({ status = 'newreq', size = 'sm', label, style }: St
         width: lg ? '7px' : '6px', height: lg ? '7px' : '6px',
         borderRadius: '50%', background: colors.dot,
       }} />
-      {label || statusMeta(status).label}
+      {label ?? status}
     </span>
   );
 }

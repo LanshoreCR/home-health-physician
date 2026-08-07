@@ -1,7 +1,8 @@
 import { useState, type CSSProperties } from 'react';
 import { Button } from '../ui/Button';
+import { Skeleton } from '../ui/Skeleton';
 import { StatusBadge } from '../ui/StatusBadge';
-import { PHYSICIAN_TYPE_LABEL, STATUS_FILTER_OPTIONS } from '../data/labels';
+import { useLabelFor, useStatusFilterOptions } from '../hooks/useLookups';
 import type { PhysicianRequestListItem, StatusFilter } from '../data/types';
 
 const DownloadIcon = (
@@ -51,6 +52,7 @@ export function RequestsList({
   onOpen, onNew, onExport,
 }: RequestsListProps) {
   const branchOptions = [{ value: 'all', label: 'All' }, ...branches.map((b) => ({ value: b, label: b }))];
+  const statusOptions = useStatusFilterOptions();
   return (
     <div style={{ background: 'var(--surface-page)', maxWidth: 'var(--page-max)', margin: '0 auto' }}>
       <div style={{ padding: '28px var(--page-gutter) 36px' }}>
@@ -75,7 +77,7 @@ export function RequestsList({
               style={{ width: '100%', height: 'var(--control-h)', padding: '0 12px 0 36px', background: 'var(--surface-card)', border: '1px solid var(--border-field)', borderRadius: 'var(--radius-md)', fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-body)', color: 'var(--text-body)', outline: 'none', boxSizing: 'border-box' }}
             />
           </div>
-          <FilterSelect label="Status" value={statusFilter} options={STATUS_FILTER_OPTIONS} onChange={(v) => onStatusFilterChange(v as StatusFilter)} />
+          <FilterSelect label="Status" value={statusFilter} options={statusOptions} onChange={(v) => onStatusFilterChange(v as StatusFilter)} />
           <FilterSelect label="Branch" value={branchFilter} options={branchOptions} onChange={onBranchFilterChange} />
         </div>
 
@@ -84,7 +86,7 @@ export function RequestsList({
             <div style={{ display: 'grid', gridTemplateColumns: COLS, gap: '16px', padding: '14px 24px', background: 'var(--surface-subtle)', borderBottom: '1px solid var(--border-card)', fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 600, letterSpacing: 'var(--ls-eyebrow)', textTransform: 'uppercase', color: 'var(--text-faint)' }}>
               {HEADERS.map((h) => <span key={h} style={CELL}>{h}</span>)}
             </div>
-            {loading && <TableNotice text="Loading requests…" />}
+            {loading && <TableSkeleton />}
             {!loading && error && <TableNotice text={error} tone="error" />}
             {!loading && !error && requests.length === 0 && (
               <TableNotice text="No requests match your filters." />
@@ -120,6 +122,30 @@ function FilterSelect({ label, value, options, onChange }: {
   );
 }
 
+const SKELETON_ROWS = 8;
+/** Un ancho por columna de HEADERS, para que las filas fantasma no queden todas iguales. */
+const SKELETON_WIDTHS = ['64%', '52%', '46%', '34%', '58%', '30%', '70%', '48%', '56%', '62%', '78%', '50%'];
+const STATUS_COL = 10;
+
+function TableSkeleton() {
+  return (
+    <>
+      {Array.from({ length: SKELETON_ROWS }, (_, row) => (
+        <div
+          key={row}
+          style={{ display: 'grid', gridTemplateColumns: COLS, gap: '16px', padding: '18px 24px', alignItems: 'center', borderBottom: row === SKELETON_ROWS - 1 ? 'none' : '1px solid var(--border-divider)' }}
+        >
+          {SKELETON_WIDTHS.map((w, col) => (
+            col === STATUS_COL
+              ? <Skeleton key={col} w={w} h={24} radius="var(--radius-pill)" />
+              : <Skeleton key={col} w={w} />
+          ))}
+        </div>
+      ))}
+    </>
+  );
+}
+
 function TableNotice({ text, tone }: { text: string; tone?: 'error' }) {
   return (
     <div style={{ padding: '40px 24px', textAlign: 'center', fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-body)', color: tone === 'error' ? 'var(--danger-600)' : 'var(--text-faint)' }}>{text}</div>
@@ -128,6 +154,7 @@ function TableNotice({ text, tone }: { text: string; tone?: 'error' }) {
 
 function Row({ r, last, onOpen }: { r: PhysicianRequestListItem; last: boolean; onOpen: (id: number) => void }) {
   const [hover, setHover] = useState(false);
+  const labelFor = useLabelFor();
   return (
     <div
       onClick={() => onOpen(r.id)}
@@ -138,14 +165,14 @@ function Row({ r, last, onOpen }: { r: PhysicianRequestListItem; last: boolean; 
       <span style={{ ...CELL, fontWeight: 600 }}>{r.first} {r.last}</span>
       <span style={{ ...CELL, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-mono)', color: 'var(--text-label)' }}>{r.npi}</span>
       <span style={{ ...CELL, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-mono)', color: 'var(--text-label)' }}>{r.branch}</span>
-      <span style={{ ...CELL, color: 'var(--text-label)' }}>{r.degree}</span>
-      <span style={CELL}>{PHYSICIAN_TYPE_LABEL[r.physicianType] || '—'}</span>
+      <span style={{ ...CELL, color: 'var(--text-label)' }}>{labelFor('degrees', r.degree)}</span>
+      <span style={CELL}>{labelFor('physicianTypes', r.physicianType) || '—'}</span>
       <span style={CELL}>{r.vaTricare ? 'Yes' : '—'}</span>
       <span style={CELL}>{r.patientName}</span>
       <span style={{ ...CELL, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-mono)', color: 'var(--text-label)' }}>{r.mrn}</span>
-      <span style={CELL}>{r.patientStatus}</span>
+      <span style={CELL}>{labelFor('patientStatuses', r.patientStatus)}</span>
       <span style={CELL}>{r.requesterName}</span>
-      <StatusBadge status={r.status} style={{ minWidth: 0, whiteSpace: 'normal' }} />
+      <StatusBadge status={r.status} label={labelFor('requestStatuses', r.status)} style={{ minWidth: 0, whiteSpace: 'normal' }} />
       <span style={{ ...CELL, color: 'var(--text-muted)' }}>{r.created}</span>
     </div>
   );
