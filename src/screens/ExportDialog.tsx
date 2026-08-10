@@ -1,5 +1,8 @@
 import { Button } from '../ui/Button';
 import { exportFilename } from '../api/dates';
+import { statusColors } from '../data/labels';
+import { EXPORTABLE_STATUSES } from '../data/types';
+import { useExportableLabels } from '../hooks/useLookups';
 
 const DownloadIcon = (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
@@ -13,13 +16,15 @@ interface ExportDialogProps {
 }
 
 /**
- * ExportDialog — confirms exporting the clean (New Request / Modify Physician / Request Approved) requests to
- * an HCHB-formatted Excel file. Held requests are excluded from the batch.
+ * ExportDialog — confirms exporting the clean requests to an HCHB-formatted
+ * Excel file. Held requests are excluded from the batch.
  * El servidor arma el archivo y estampa ExportedAt, así que el batch real lo
  * decide él: aquí solo se confirma el conteo.
  */
 export function ExportDialog({ count, exporting, onCancel, onConfirm }: ExportDialogProps) {
   const filename = exportFilename();
+  const exportableLabels = useExportableLabels();
+  const highlight = statusColors(EXPORTABLE_STATUSES[0]).fg;
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
       <div style={{ width: '520px', background: 'var(--surface-card)', borderRadius: 'var(--radius-2xl)', boxShadow: 'var(--shadow-dialog)', overflow: 'hidden' }}>
@@ -31,7 +36,7 @@ export function ExportDialog({ count, exporting, onCancel, onConfirm }: ExportDi
             <h2 style={{ margin: 0, fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 'var(--fs-dialog-title)', color: 'var(--text-heading)' }}>Export ready requests</h2>
           </div>
           <p style={{ margin: '0 0 20px 50px', fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-body)', lineHeight: 'var(--lh-body)', color: 'var(--text-muted)' }}>
-            {count} clean <span style={{ fontWeight: 600, color: 'var(--status-newreq-fg)' }}>New Request / Modify Physician / Request Approved</span> requests will be exported to an HCHB-formatted Excel file. Held requests and already-exported requests are excluded.
+            {count} clean <span style={{ fontWeight: 600, color: highlight }}>{exportableLabels('and')}</span> requests will be exported to an HCHB-formatted Excel file. Held requests and already-exported requests are excluded.
           </p>
         </div>
 
