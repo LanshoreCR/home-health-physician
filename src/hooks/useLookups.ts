@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { toOptions } from '../api/schemas';
 import { catalogFrom, labelFrom, useCatalogsStore, type CatalogName } from '../store/catalogs';
+import { EXPORTABLE_STATUSES } from '../data/types';
 import type { RequestStatus } from '../data/types';
 
 /**
@@ -50,4 +51,23 @@ export function useStatusOptions(current?: RequestStatus) {
 export function useStatusFilterOptions() {
   const options = useStatusOptions();
   return useMemo(() => [{ value: 'all', label: 'All' }, ...options], [options]);
+}
+
+/** "A, B, and C" — coma de Oxford, como estaba escrito el copy a mano. */
+function joinList(items: string[], conjunction: string): string {
+  if (items.length < 2) return items.join('');
+  return `${items.slice(0, -1).join(', ')}, ${conjunction} ${items[items.length - 1]}`;
+}
+
+/**
+ * El detalle y el diálogo de export nombran los mismos estatus con distinta
+ * conjunción, así que se devuelve el armador y no la frase ya resuelta.
+ */
+export function useExportableLabels() {
+  const labelFor = useLabelFor();
+  return useCallback(
+    (conjunction: string) =>
+      joinList(EXPORTABLE_STATUSES.map((status) => labelFor('requestStatuses', status)), conjunction),
+    [labelFor],
+  );
 }
