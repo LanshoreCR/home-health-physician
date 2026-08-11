@@ -1,9 +1,27 @@
 import { OktaAuth } from '@okta/okta-auth-js';
 
-const issuer = import.meta.env.VITE_OKTA_ISSUER ?? '';
-const clientId = import.meta.env.VITE_OKTA_CLIENT_ID ?? '';
-const redirectUri =
-  import.meta.env.VITE_OKTA_REDIRECT_URI ?? `${window.location.origin}/login/callback`;
+/** Definida pero vacía cuenta como ausente: es la forma típica de un build mal configurado. */
+function env(name: string): string | null {
+  const value = import.meta.env[name];
+  if (typeof value !== 'string' || value.trim() === '') return null;
+  return value.trim();
+}
+
+function required(name: string): string {
+  const value = env(name);
+  if (value === null) throw new Error(`${name} is missing from this build. See .env.example.`);
+  return value;
+}
+
+const issuer = required('VITE_OKTA_ISSUER');
+const clientId = required('VITE_OKTA_CLIENT_ID');
+
+/**
+ * Derivado del origen donde se sirve la app, así el mismo build sirve para local y
+ * para cada ambiente sin una variable por ambiente. La variable queda como override
+ * para cuando el origen no es el registrado en Okta (slots de Azure, dominio propio).
+ */
+const redirectUri = env('VITE_OKTA_REDIRECT_URI') ?? `${window.location.origin}/login/callback`;
 
 export const oktaAuth = new OktaAuth({
   issuer,
