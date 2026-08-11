@@ -173,7 +173,7 @@ export const saveRequestSchema = z.object({
   additionalDetails: z.string().trim().transform(emptyToNull),
 });
 
-export type SaveRequestBody = z.infer<typeof saveRequestSchema> & { submitter?: string };
+export type SaveRequestBody = z.infer<typeof saveRequestSchema>;
 
 export type PhysicianRequest = z.infer<typeof physicianRequestSchema>;
 export type PhysicianRequestListItem = z.infer<typeof physicianRequestListItemSchema>;
@@ -214,9 +214,9 @@ export function validateDraft(draft: RequestDraft): DraftValidation {
   return { ok: false, fieldErrors: flat };
 }
 
-export function toSaveBody(draft: RequestDraft, submitter?: string): SaveRequestBody {
-  const body = saveRequestSchema.parse(draft);
-  return submitter ? { ...body, submitter } : body;
+/** El submitter ya no viaja en el body: el backend lo saca del token. */
+export function toSaveBody(draft: RequestDraft): SaveRequestBody {
+  return saveRequestSchema.parse(draft);
 }
 
 export function toDraft(request: PhysicianRequest): RequestDraft {

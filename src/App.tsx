@@ -20,13 +20,12 @@ import { ApiError, errorMessage } from './api/client';
 import { toDraft } from './api/schemas';
 import { TRIGGER_STATUSES } from './data/types';
 import type { PhysicianRequest, RequestDraft, RequestStatus, StatusFilter } from './data/types';
+import { useOktaUser } from './auth/useOktaUser';
 
 type View = 'list' | 'detail' | 'form';
 
-/** Provisional: sale del perfil de Okta cuando se conecte la autenticación. */
-const SUBMITTER = 'I. Brooks';
-
 export function App() {
+  const user = useOktaUser();
   const [view, setView] = useState<View>('list');
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [editing, setEditing] = useState<PhysicianRequest | null>(null);
@@ -118,7 +117,7 @@ export function App() {
     clearFormErrors();
     try {
       if (editing) await updateRequest(editing.id, values);
-      if (!editing) await createRequest(values, SUBMITTER);
+      if (!editing) await createRequest(values);
       setEditing(null);
       setView('list');
       invalidate();
@@ -156,12 +155,9 @@ export function App() {
     );
   }
 
-  const role = view === 'form' ? 'Submitter' : 'Reviewer';
-  const initials = role === 'Reviewer' ? 'WT' : 'IB';
-
   return (
     <>
-      <AppBar crumb={crumb} role={role} initials={initials} />
+      <AppBar crumb={crumb} name={user.name} initials={user.initials} />
 
       {view === 'list' && (
         <RequestsList
