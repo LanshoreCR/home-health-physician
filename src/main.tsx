@@ -3,23 +3,25 @@ import { createRoot } from 'react-dom/client'
 import './styles/styles.css'
 import './styles/base.css'
 import { App } from './App.tsx'
+import { AuthGate } from './auth/AuthGate.tsx'
+import { ensureSession, oktaAuth } from './auth/okta.ts'
+import { configureAuth } from './api/client.ts'
 import { loadCatalogs } from './store/catalogs.ts'
 
-// Punto de enganche de Okta. Cuando exista el cliente, esta única línea hace que
-// todos los endpoints manden Bearer token — ningún módulo de src/api/ cambia:
-//
-//   configureAuth(
-//     () => oktaAuth.getAccessToken() ?? null,
-//     () => oktaAuth.signInWithRedirect(),
-//   )
-//
-// Recomendado: tokenManager con storage 'memory' + getWithoutPrompt() al montar,
-// para que el access token nunca toque localStorage.
+configureAuth(
+  () => oktaAuth.getAccessToken() ?? null,
+  () => {
+    void oktaAuth.signInWithRedirect()
+  },
+)
 
-loadCatalogs()
+/** Después de la sesión, no antes: sin token estas dos requests salen en 401. */
+void ensureSession().then(loadCatalogs)
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <AuthGate>
+      <App />
+    </AuthGate>
   </StrictMode>,
 )

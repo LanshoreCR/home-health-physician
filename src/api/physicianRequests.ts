@@ -48,8 +48,8 @@ export async function getRequest(id: number, signal?: AbortSignal): Promise<Phys
   return parseResponse(physicianRequestSchema, data, 'getRequest');
 }
 
-export async function createRequest(draft: RequestDraft, submitter: string): Promise<number> {
-  const data = await api.post<unknown>(PATH, toSaveBody(draft, submitter));
+export async function createRequest(draft: RequestDraft): Promise<number> {
+  const data = await api.post<unknown>(PATH, toSaveBody(draft));
   return parseResponse(createdSchema, data, 'createRequest').id;
 }
 
