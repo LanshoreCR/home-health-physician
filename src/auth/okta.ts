@@ -75,7 +75,11 @@ async function resolveSession(): Promise<void> {
 /**
  * Cierra la sesión de Okta, no solo la local: al volver al origen el gate no
  * encuentra token y manda de nuevo a Okta, que ya no tiene cookie y pide login.
+ *
+ * clearTokensBeforeRedirect porque el default solo los marca como pendingRemove
+ * y los borra en tokenManager.start(), que corre desde oktaAuth.start(). La app
+ * no lo usa, así que sin esto los tokens sobreviven al logout.
  */
 export async function signOut(): Promise<void> {
-  await oktaAuth.signOut();
+  await oktaAuth.signOut({ clearTokensBeforeRedirect: true });
 }
