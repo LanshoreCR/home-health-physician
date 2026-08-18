@@ -223,7 +223,7 @@ export function RequestForm({ mode, values, submitting, error, fieldErrors, onCa
                 )}
               </FormField>
 
-              <Field label="Coverage & verification" required style={{ gridColumn: '1 / -1' }}>
+              <Field label="Coverage & verification" style={{ gridColumn: '1 / -1' }}>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px 48px', alignItems: 'center' }}>
                   <Controller name="vaTricare" control={control} render={({ field }) => <Checkbox label="VA/Tricare" checked={field.value} onChange={field.onChange} />} />
                   <Controller name="pecosVerified" control={control} render={({ field }) => <Checkbox label="Pecos Verified" checked={field.value} onChange={field.onChange} />} />
