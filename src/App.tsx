@@ -21,6 +21,7 @@ import { toDraft } from './api/schemas';
 import { TRIGGER_STATUSES } from './data/types';
 import type { PhysicianRequest, RequestDraft, RequestStatus, StatusFilter } from './data/types';
 import { useOktaUser } from './auth/useOktaUser';
+import { signOut } from './auth/okta';
 
 type View = 'list' | 'detail' | 'form';
 
@@ -157,7 +158,7 @@ export function App() {
 
   return (
     <>
-      <AppBar crumb={crumb} name={user.name} initials={user.initials} />
+      <AppBar crumb={crumb} name={user.name} initials={user.initials} onSignOut={() => void signOut()} />
 
       {view === 'list' && (
         <RequestsList

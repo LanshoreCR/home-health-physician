@@ -23,10 +23,14 @@ const clientId = required('VITE_OKTA_CLIENT_ID');
  */
 const redirectUri = env('VITE_OKTA_REDIRECT_URI') ?? `${window.location.origin}/login/callback`;
 
+/** Mismo criterio que redirectUri. Tiene que estar en los Sign-out redirect URIs de Okta. */
+const postLogoutRedirectUri = env('VITE_OKTA_POST_LOGOUT_REDIRECT_URI') ?? window.location.origin;
+
 export const oktaAuth = new OktaAuth({
   issuer,
   clientId,
   redirectUri,
+  postLogoutRedirectUri,
   scopes: ['openid', 'profile', 'email'],
   pkce: true,
   /**
@@ -66,4 +70,12 @@ async function resolveSession(): Promise<void> {
    * Sin esto el gate se abriría por un frame y la app pintaría sin sesión.
    */
   await new Promise<void>(() => {});
+}
+
+/**
+ * Cierra la sesión de Okta, no solo la local: al volver al origen el gate no
+ * encuentra token y manda de nuevo a Okta, que ya no tiene cookie y pide login.
+ */
+export async function signOut(): Promise<void> {
+  await oktaAuth.signOut();
 }
