@@ -18,7 +18,7 @@ import {
 import { exportBatch } from './api/export';
 import { ApiError, errorMessage } from './api/client';
 import { toDraft } from './api/schemas';
-import { TRIGGER_STATUSES } from './data/types';
+// import { TRIGGER_STATUSES } from './data/types';
 import type { PhysicianRequest, RequestDraft, RequestStatus, StatusFilter } from './data/types';
 import { useOktaUser } from './auth/useOktaUser';
 import { signOut } from './auth/okta';
@@ -36,7 +36,8 @@ export function App() {
   const [formError, setFormError] = useState<string | null>(null);
   const [formFieldErrors, setFormFieldErrors] = useState<Record<string, string[]>>({});
   const [statusPending, setStatusPending] = useState(false);
-  const [emailFailed, setEmailFailed] = useState(false);
+  // Email deshabilitado hasta que existan las credenciales de Microsoft Graph.
+  // const [emailFailed, setEmailFailed] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [search, setSearch] = useState('');
@@ -60,7 +61,7 @@ export function App() {
 
   const openDetail = (id: number) => {
     setSelectedId(id);
-    setEmailFailed(false);
+    // setEmailFailed(false);
     setView('detail');
   };
 
@@ -84,10 +85,11 @@ export function App() {
   const changeStatus = async (status: RequestStatus) => {
     if (selectedId === null) return;
     setStatusPending(true);
-    setEmailFailed(false);
+    // setEmailFailed(false);
     try {
-      const result = await setRequestStatus(selectedId, status);
-      setEmailFailed(TRIGGER_STATUSES.includes(status) && !result.emailSent);
+      await setRequestStatus(selectedId, status);
+      // const result = await setRequestStatus(selectedId, status);
+      // setEmailFailed(TRIGGER_STATUSES.includes(status) && !result.emailSent);
       detail.refetch();
       invalidate();
     } catch (err) {
@@ -186,7 +188,6 @@ export function App() {
             <RequestDetail
               request={detail.request}
               statusPending={statusPending}
-              emailFailed={emailFailed}
               onSetStatus={changeStatus}
               onEdit={startEdit}
               onDelete={() => setConfirmingDelete(true)}
