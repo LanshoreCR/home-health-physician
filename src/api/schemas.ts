@@ -134,7 +134,7 @@ const PHYSICIAN_TYPES = ['f2f', 'primarySecondary'];
  */
 export const saveRequestSchema = z.object({
   patientName: required(TEXT_MAX),
-  mrn: required(50),
+  mrn: required(50).regex(/^\d+$/, 'MRN must contain digits only'),
   patientStatus: required(20),
   requesterName: required(TEXT_MAX),
   requesterEmail: required(256).pipe(z.email('Enter a valid email address')),
