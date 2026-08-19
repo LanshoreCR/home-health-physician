@@ -4,7 +4,8 @@ import { Card } from '../ui/Card';
 import { Select } from '../ui/Select';
 import { Skeleton } from '../ui/Skeleton';
 import { StatusBadge } from '../ui/StatusBadge';
-import { EXPORTABLE_STATUSES, TRIGGER_STATUSES } from '../data/types';
+import { EXPORTABLE_STATUSES } from '../data/types';
+// import { TRIGGER_STATUSES } from '../data/types';
 import { statusColors, statusSub } from '../data/labels';
 import { useExportableLabels, useLabelFor, useLookups, useStatusOptions } from '../hooks/useLookups';
 import type { PhysicianRequest, RequestStatus } from '../data/types';
@@ -18,9 +19,10 @@ const TrashIcon = (
 const InfoIcon = (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--blue-500)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: '1px' }}><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></svg>
 );
-const WarnIcon = (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--danger-600)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: '1px' }}><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
-);
+// Email deshabilitado hasta que existan las credenciales de Microsoft Graph.
+// const WarnIcon = (
+//   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--danger-600)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: '1px' }}><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
+// );
 
 function KV({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
@@ -45,7 +47,7 @@ function Banner({ icon, children, tone }: { icon: ReactNode; children: ReactNode
 interface RequestDetailProps {
   request: PhysicianRequest;
   statusPending: boolean;
-  emailFailed: boolean;
+  // emailFailed: boolean;
   onSetStatus: (status: RequestStatus) => void;
   onEdit: () => void;
   onDelete: () => void;
@@ -55,14 +57,14 @@ interface RequestDetailProps {
  * RequestDetail — review view. Prominent status, grouped read-only data,
  * a status timeline, and the reviewer's Edit + status disposition controls.
  */
-export function RequestDetail({ request, statusPending, emailFailed, onSetStatus, onEdit, onDelete }: RequestDetailProps) {
+export function RequestDetail({ request, statusPending, onSetStatus, onEdit, onDelete }: RequestDetailProps) {
   const r = request;
   const { lookups } = useLookups();
   const labelFor = useLabelFor();
   const statusOptions = useStatusOptions(r.status);
   const exportableLabels = useExportableLabels();
   const exportable = EXPORTABLE_STATUSES.includes(r.status);
-  const notifies = TRIGGER_STATUSES.includes(r.status);
+  // const notifies = TRIGGER_STATUSES.includes(r.status);
   return (
     <div style={{ background: 'var(--surface-page)', maxWidth: 'var(--page-max)', margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '28px var(--page-gutter) 24px', background: 'var(--surface-card)', borderBottom: '1px solid var(--border-card)' }}>
@@ -153,6 +155,7 @@ export function RequestDetail({ request, statusPending, emailFailed, onSetStatus
             <Timeline request={r} exportable={exportable} />
           </Card>
 
+          {/* Email deshabilitado hasta que existan las credenciales de Microsoft Graph.
           {emailFailed && (
             <Banner icon={WarnIcon} tone="warn">
               {`The status was saved, but the notification email to ${r.requesterEmail} could not be sent. Follow up manually.`}
@@ -162,7 +165,7 @@ export function RequestDetail({ request, statusPending, emailFailed, onSetStatus
             <Banner icon={InfoIcon}>
               {`A response regarding this request will be sent to ${r.requesterEmail}`}
             </Banner>
-          )}
+          )} */}
 
           <Banner icon={InfoIcon}>
             {exportable
