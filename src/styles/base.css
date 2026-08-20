@@ -1,6 +1,6 @@
 /* App shell base — reset + app bar chrome (from the PAT export index.html). */
 :root {
-  --page-max: 1200px;
+  --page-max: 1600px;
   --page-gutter: 40px;
 }
 
