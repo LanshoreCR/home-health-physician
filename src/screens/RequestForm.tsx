@@ -148,8 +148,8 @@ export function RequestForm({ mode, values, submitting, error, fieldErrors, onCa
   const phoneChange = <K extends DraftKey>(field: ControllerRenderProps<RequestDraft, K>) =>
     (e: ChangeEvent<HTMLInputElement>) => field.onChange(formatPhone(e.target.value));
 
-  const digitsChange = <K extends DraftKey>(field: ControllerRenderProps<RequestDraft, K>) =>
-    (e: ChangeEvent<HTMLInputElement>) => field.onChange(e.target.value.replace(/[^0-9]/g, ''));
+  const alphanumericChange = <K extends DraftKey>(field: ControllerRenderProps<RequestDraft, K>) =>
+    (e: ChangeEvent<HTMLInputElement>) => field.onChange(e.target.value.replace(/[^A-Za-z0-9]/g, ''));
 
   /** Un refresh de fondo que falla no debe blanquear un form que ya tiene catálogos. */
   if (lookupsError && !lookups) {
@@ -175,8 +175,8 @@ export function RequestForm({ mode, values, submitting, error, fieldErrors, onCa
               <FormField name="patientName" label="Patient name" required>
                 {(field, invalid) => <Input {...field} invalid={invalid} />}
               </FormField>
-              <FormField name="mrn" label="Medical record number" required hint="Digits only">
-                {(field, invalid) => <Input mono inputMode="numeric" {...field} onChange={digitsChange(field)} invalid={invalid} />}
+              <FormField name="mrn" label="Medical record number" required hint="Letters and digits only">
+                {(field, invalid) => <Input mono {...field} onChange={alphanumericChange(field)} invalid={invalid} />}
               </FormField>
               <FormField name="patientStatus" label="Patient episode status" required>
                 {(field, invalid) => <Select {...field} options={toOptions(lookups.patientStatuses)} invalid={invalid} />}

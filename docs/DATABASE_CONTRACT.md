@@ -37,7 +37,7 @@ One row per request. Enumerated fields are `...Id` FKs into the lookup tables in
 | 1 | `id` | `INT IDENTITY` PK | auto | Surface as the request number. |
 | | **Patient & requester** | | | |
 | 2 | `patientName` | `NVARCHAR(200)` | ✅ | |
-| 3 | `mrn` | `NVARCHAR(50)` | ✅ | Medical record number. Digits only (validated in the app and the API, no DB constraint). |
+| 3 | `mrn` | `NVARCHAR(50)` | ✅ | Medical record number. Letters and digits only (validated in the app and the API, no DB constraint). |
 | 4 | `patientStatusId` | `INT` FK → `PatientStatus` | ✅ | |
 | 5 | `requesterName` | `NVARCHAR(200)` | ✅ | |
 | 6 | `requesterEmail` | `NVARCHAR(256)` | ✅ | Response email sent here on approve/deny. |
