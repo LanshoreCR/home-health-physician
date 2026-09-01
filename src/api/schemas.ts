@@ -100,6 +100,13 @@ export const lookupsSchema = z.object({
   requestStatuses: z.array(lookupItemSchema),
 });
 
+export const currentUserSchema = z.object({
+  employeeId: z.string(),
+  name: z.string(),
+  email: z.string(),
+  roles: z.array(z.string()),
+});
+
 export const branchesSchema = z.array(z.string());
 export const createdSchema = z.object({ id: z.number() });
 export const setStatusResultSchema = z.object({ success: z.boolean(), emailSent: z.boolean() });
@@ -178,6 +185,7 @@ export type SaveRequestBody = z.infer<typeof saveRequestSchema>;
 export type PhysicianRequest = z.infer<typeof physicianRequestSchema>;
 export type PhysicianRequestListItem = z.infer<typeof physicianRequestListItemSchema>;
 export type PhysicianRequestList = z.infer<typeof physicianRequestListSchema>;
+export type CurrentUser = z.infer<typeof currentUserSchema>;
 export type RequestStatus = z.infer<typeof requestStatusSchema>;
 export type LookupItem = z.infer<typeof lookupItemSchema>;
 export type Lookups = z.infer<typeof lookupsSchema>;

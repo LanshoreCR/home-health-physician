@@ -20,13 +20,15 @@ import { ApiError, errorMessage } from './api/client';
 import { toDraft } from './api/schemas';
 // import { TRIGGER_STATUSES } from './data/types';
 import type { PhysicianRequest, RequestDraft, RequestStatus, StatusFilter } from './data/types';
-import { useOktaUser } from './auth/useOktaUser';
+import { useRole } from './auth/useRole';
 import { signOut } from './auth/okta';
+import { initialsOf, useSessionStore } from './store/session';
 
 type View = 'list' | 'detail' | 'form';
 
 export function App() {
-  const user = useOktaUser();
+  const user = useSessionStore((state) => state.user);
+  const can = useRole();
   const [view, setView] = useState<View>('list');
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [editing, setEditing] = useState<PhysicianRequest | null>(null);
@@ -160,7 +162,12 @@ export function App() {
 
   return (
     <>
-      <AppBar crumb={crumb} name={user.name} initials={user.initials} onSignOut={() => void signOut()} />
+      <AppBar
+        crumb={crumb}
+        name={user?.name ?? ''}
+        initials={initialsOf(user?.name ?? '')}
+        onSignOut={() => void signOut()}
+      />
 
       {view === 'list' && (
         <RequestsList
@@ -179,6 +186,8 @@ export function App() {
           onOpen={openDetail}
           onNew={startCreate}
           onExport={() => setExportOpen(true)}
+          canCreate={can.canCreate}
+          canExport={can.canExport}
         />
       )}
 
@@ -191,6 +200,9 @@ export function App() {
               onSetStatus={changeStatus}
               onEdit={startEdit}
               onDelete={() => setConfirmingDelete(true)}
+              canEdit={can.canEdit(detail.request)}
+              canDelete={can.canDelete}
+              canSetStatus={can.canSetStatus}
             />
           )}
         </Loader>
