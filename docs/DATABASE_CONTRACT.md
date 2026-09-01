@@ -22,7 +22,7 @@ Two roles touch it:
 These are settled — reflected in the schema below. Noting them so intent is clear:
 
 - **No status-change history table.** We don't track who/when/from→to on status changes.
-- **Export log via `exportedAt`.** When a batch exports, its rows get stamped so they don't re-export. The batch is "exportable status **and** not yet exported."
+- **The export is repeatable.** Every batch pulls *every* request in an exportable status, whether or not it went out before — the client asked for this and de-duplicates on their side. `exportedAt` is stamped on each run as a "last exported" mark; it is **not** a filter. (It was one until 2026-09-01: the batch used to be "exportable status **and** not yet exported.")
 - **Lookup tables + FKs** for all enumerated values (degree, state, notification methods, etc.) — they'll grow, so no magic strings on the row.
 - **Soft delete.** Requests are never hard-deleted; `isDeleted` / `deletedAt` flag them and they drop out of lists and batches.
 
@@ -75,7 +75,7 @@ One row per request. Enumerated fields are `...Id` FKs into the lookup tables in
 | 34 | `statusId` | `INT` FK → `RequestStatus` | ✅ | Defaults to `newreq` on create. |
 | 35 | `created` | `DATETIME2` | auto | Set server-side on insert. |
 | 36 | `submitter` | `NVARCHAR(100)` | auto | Who submitted (initials/user today). |
-| 37 | `exportedAt` | `DATETIME2` NULL | auto | Stamped when the row is exported in a batch. NULL = not yet exported. |
+| 37 | `exportedAt` | `DATETIME2` NULL | auto | Time of the row's **most recent** export; re-stamped every batch it appears in. NULL = never exported. Informational only — it does not gate the batch. |
 | 38 | `isDeleted` | `BIT` NOT NULL | auto | Soft delete. Default 0. |
 | 39 | `deletedAt` | `DATETIME2` NULL | auto | Set when `isDeleted` flips to 1. |
 

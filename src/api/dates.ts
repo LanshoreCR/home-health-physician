@@ -18,10 +18,14 @@ export function formatCreated(raw: string): string {
   return `${MONTHS[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
 }
 
-/** El servidor nombra el archivo con DateTime.UtcNow y no expone Content-Disposition. */
+/**
+ * El servidor nombra el archivo con DateTime.UtcNow y no expone Content-Disposition.
+ * La hora va en el nombre porque el export es repetible: dos batches del mismo día
+ * tienen que distinguirse en la carpeta de descargas.
+ */
 export function exportFilename(): string {
   const now = new Date();
-  const mm = String(now.getUTCMonth() + 1).padStart(2, '0');
-  const dd = String(now.getUTCDate()).padStart(2, '0');
-  return `PAT_Export_${now.getUTCFullYear()}-${mm}-${dd}.xlsx`;
+  const pad = (value: number) => String(value).padStart(2, '0');
+  const date = `${now.getUTCFullYear()}-${pad(now.getUTCMonth() + 1)}-${pad(now.getUTCDate())}`;
+  return `PAT_Export_${date}_${pad(now.getUTCHours())}${pad(now.getUTCMinutes())}.xlsx`;
 }
