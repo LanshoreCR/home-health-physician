@@ -37,6 +37,8 @@ interface RequestsListProps {
   onOpen: (id: number) => void;
   onNew: () => void;
   onExport: () => void;
+  canCreate: boolean;
+  canExport: boolean;
 }
 
 /**
@@ -50,6 +52,7 @@ export function RequestsList({
   branchFilter, onBranchFilterChange,
   branches,
   onOpen, onNew, onExport,
+  canCreate, canExport,
 }: RequestsListProps) {
   const branchOptions = [{ value: 'all', label: 'All' }, ...branches.map((b) => ({ value: b, label: b }))];
   const statusOptions = useStatusFilterOptions();
@@ -62,8 +65,8 @@ export function RequestsList({
             <p style={{ margin: 0, fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-body)', color: 'var(--text-muted)' }}>{totalCount} requests · {exportableCount} ready to export</p>
           </div>
           <div style={{ display: 'flex', gap: '10px' }}>
-            <Button variant="secondary" icon={DownloadIcon} onClick={onExport}>Export to Excel</Button>
-            <Button variant="primary" icon={PlusIcon} onClick={onNew}>New Physician Request</Button>
+            {canExport && <Button variant="secondary" icon={DownloadIcon} onClick={onExport}>Export to Excel</Button>}
+            {canCreate && <Button variant="primary" icon={PlusIcon} onClick={onNew}>New Physician Request</Button>}
           </div>
         </header>
 

@@ -51,13 +51,19 @@ interface RequestDetailProps {
   onSetStatus: (status: RequestStatus) => void;
   onEdit: () => void;
   onDelete: () => void;
+  canEdit: boolean;
+  canDelete: boolean;
+  canSetStatus: boolean;
 }
 
 /**
  * RequestDetail — review view. Prominent status, grouped read-only data,
  * a status timeline, and the reviewer's Edit + status disposition controls.
  */
-export function RequestDetail({ request, statusPending, onSetStatus, onEdit, onDelete }: RequestDetailProps) {
+export function RequestDetail({
+  request, statusPending, onSetStatus, onEdit, onDelete,
+  canEdit, canDelete, canSetStatus,
+}: RequestDetailProps) {
   const r = request;
   const { lookups } = useLookups();
   const labelFor = useLabelFor();
@@ -82,9 +88,9 @@ export function RequestDetail({ request, statusPending, onSetStatus, onEdit, onD
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Button variant="danger" size="lg" icon={TrashIcon} onClick={onDelete}>Delete</Button>
-          <Button variant="secondary" size="lg" icon={EditIcon} onClick={onEdit}>Edit</Button>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          {canDelete && <Button variant="danger" size="lg" icon={TrashIcon} onClick={onDelete}>Delete</Button>}
+          {canEdit && <Button variant="secondary" size="lg" icon={EditIcon} onClick={onEdit}>Edit</Button>}
+          {canSetStatus && <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <span style={{ fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-label)', color: 'var(--text-faint)' }}>{statusPending ? 'Saving status…' : 'Set status'}</span>
             <Select
               value={r.status}
@@ -94,7 +100,7 @@ export function RequestDetail({ request, statusPending, onSetStatus, onEdit, onD
               onChange={(e) => onSetStatus(e.target.value as RequestStatus)}
               style={{ minWidth: '220px' }}
             />
-          </div>
+          </div>}
         </div>
       </div>
 
