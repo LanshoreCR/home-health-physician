@@ -59,7 +59,7 @@ One row per request. Enumerated fields are `...Id` FKs into the lookup tables in
 | 20 | `vitalAlertMethodId` | `INT` FK → `VitalAlertMethod` | ✅ | |
 | 21 | `orderNotifMethodId` | `INT` FK → `OrderNotifMethod` | ✅ | |
 | | **Physician's office** | | | |
-| 22 | `branch` | `NVARCHAR(20)` | ✅ | Branch code (e.g. `ADO-022`). |
+| 22 | `branch` | `NVARCHAR(50)` | ✅ | Branch code (e.g. `ADO-022`). The app and the API cap input at 25 characters; the column carries headroom so the next widening does not need another index drop/recreate. |
 | 23 | `address` | `NVARCHAR(200)` | ✅ | |
 | 24 | `city` | `NVARCHAR(100)` | ✅ | |
 | 25 | `stateId` | `INT` FK → `USState` | ✅ | |

@@ -166,7 +166,7 @@ export const saveRequestSchema = z.object({
   physicianGroup: optional(TEXT_MAX),
   vitalAlerts: required(20),
   orderNotif: required(20),
-  branch: required(20),
+  branch: required(25),
   address: required(TEXT_MAX),
   city: required(TEXT_MAX),
   state: required(20),
