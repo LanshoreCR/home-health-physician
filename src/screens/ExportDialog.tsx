@@ -36,7 +36,7 @@ export function ExportDialog({ count, exporting, onCancel, onConfirm }: ExportDi
             <h2 style={{ margin: 0, fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 'var(--fs-dialog-title)', color: 'var(--text-heading)' }}>Export ready requests</h2>
           </div>
           <p style={{ margin: '0 0 20px 50px', fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-body)', lineHeight: 'var(--lh-body)', color: 'var(--text-muted)' }}>
-            {count} clean <span style={{ fontWeight: 600, color: highlight }}>{exportableLabels('and')}</span> requests will be exported to an HCHB-formatted Excel file. Held requests and already-exported requests are excluded.
+            {count} clean <span style={{ fontWeight: 600, color: highlight }}>{exportableLabels('and')}</span> requests will be exported to an HCHB-formatted Excel file. Held requests are excluded. Requests that went out in an earlier batch are included again.
           </p>
         </div>
 

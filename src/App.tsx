@@ -138,7 +138,7 @@ export function App() {
     setExporting(true);
     try {
       const downloaded = await exportBatch();
-      if (!downloaded) window.alert('There is nothing left to export — every clean request was already sent to HCHB.');
+      if (!downloaded) window.alert('There is nothing to export — no request has been approved yet.');
       invalidate();
     } catch (err) {
       window.alert(errorMessage(err));
