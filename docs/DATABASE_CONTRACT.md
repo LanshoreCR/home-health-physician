@@ -53,7 +53,7 @@ One row per request. Enumerated fields are `...Id` FKs into the lookup tables in
 | 15 | `licenseStateId` | `INT` FK → `USState` | — | Optional. |
 | 16 | `licenseExp` | `DATE` | — | Optional. |
 | 17 | `specialty` | `NVARCHAR(100)` | — | Optional free text. |
-| 18 | `taxonomy` | `NVARCHAR(20)` | — | Optional free text. Blank → "None" on HCHB import. |
+| 18 | `taxonomy` | `NVARCHAR(20)` | — | Optional free text. Goes to column Q (`Taxonomy Code`) of the HCHB import. Blank → `*NONE`. |
 | 19 | `physicianGroup` | `NVARCHAR(200)` | — | Optional free text. Blank → "None" on HCHB import. |
 | | **Notifications** | | | |
 | 20 | `vitalAlertMethodId` | `INT` FK → `VitalAlertMethod` | ✅ | |
