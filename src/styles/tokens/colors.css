@@ -41,6 +41,7 @@
   --status-special-bg:   #e0e7ff;  --status-special-fg:   #4338ca;  --status-special-dot:   #6366f1;
   --status-denied-bg:    #fee2e2;  --status-denied-fg:    #b91c1c;  --status-denied-dot:    #dc4040;
   --status-approved-bg:  #ccfbf1;  --status-approved-fg:  #0f766e;  --status-approved-dot:  #14b8a6;
+  --status-imported-bg:  #e2e8f0;  --status-imported-fg:  #475569;  --status-imported-dot:  #64748b;
 
   /* ── Semantic action colors ── */
   --success-500: #16a34a;  --success-600: #15803d;  --success-50: #e7f4ec;
