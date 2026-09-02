@@ -215,23 +215,29 @@ OUT : list rows (WHERE isDeleted = 0) — at minimum:
       id, first, last, degree(label), npi, branch, patientName, mrn,
       status(code+label), created, submitter, exportedAt
 ```
-> Also return a total count (for the "N requests" header) and the exportable-and-unexported count — via extra result set or output params, your preference.
+> Also return a total count (for the "N requests" header) and the exportable count — via extra result set or output params, your preference. It counts every exportable row: `exportedAt` stopped narrowing it on 2026-09-01.
 
 ### 6.6 `usp_PhysicianRequest_GetExportBatch`
-Pulls the clean, not-yet-exported records for the HCHB export file.
+Pulls the clean records for the HCHB export file. A row that already went out can come back, scoped by the date range the reviewer picks in the export dialog.
 
 ```
-IN  : (none)   -- optionally @branch to scope a batch
-OUT : full rows WHERE status.isExportable = 1 AND exportedAt IS NULL AND isDeleted = 0
+IN  : @from DATE = NULL, @to DATE = NULL   -- both NULL = no date limit
+OUT : full rows WHERE status.isExportable = 1 AND isDeleted = 0
+      AND (exportedAt IS NULL OR CAST(exportedAt AS DATE) BETWEEN @from AND @to)
 ```
+> A request that was never exported is **always** in the batch — the range only decides which
+> already-exported ones are pulled back in. The endpoint takes them as
+> `POST /api/export?from=yyyy-MM-dd&to=yyyy-MM-dd`, and `to` earlier than `from` is a 400.
+> `exportedAt` is UTC and the reviewer picks local dates, so a batch pulled late in the evening
+> stamps rows on the next UTC day and falls outside a "today" range the morning after.
 
 ### 6.7 `usp_PhysicianRequest_MarkExported`
-Stamps a batch as exported so it won't be pulled again. Call after the export file is generated.
+Records when a batch was exported. Call after the export file is generated. Rows already stamped are re-stamped with the newer time — the mark never retires a row from a later batch, it only decides which ranges pull it back in.
 
 ```
 IN  : @ids   (TVP of INT, or comma-delimited list)  -- the rows that were exported
 OUT : rows affected
-      -- sets exportedAt = now WHERE id IN (@ids) AND exportedAt IS NULL
+      -- sets exportedAt = now WHERE id IN (@ids)   -- re-stamps rows that already had one
 ```
 
 ### 6.8 `usp_PhysicianRequest_Delete`  *(soft)*
