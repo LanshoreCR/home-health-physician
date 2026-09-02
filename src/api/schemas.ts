@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { formatCreated } from './dates';
 
 /**
  * Fuente única de verdad del contrato con home-health-physician-api.
@@ -23,8 +22,6 @@ export const requestStatusSchema = z.enum([
 
 // ---------------------------------------------------------------- lecturas
 
-const apiDate = z.string().transform(formatCreated);
-
 export const physicianRequestListItemSchema = z.object({
   id: z.number(),
   first: z.string(),
@@ -39,7 +36,8 @@ export const physicianRequestListItemSchema = z.object({
   patientStatus: z.string(),
   requesterName: z.string(),
   status: requestStatusSchema,
-  created: apiDate,
+  /** Crudo: la lista ordena por esta columna, y el formato es cosa de la pantalla. */
+  created: z.string(),
 });
 
 export const physicianRequestListSchema = z.object({
@@ -83,7 +81,7 @@ export const physicianRequestSchema = z.object({
   admissionCoordinator: z.string(),
   additionalDetails: z.string(),
   status: requestStatusSchema,
-  created: apiDate,
+  created: z.string(),
   submitter: z.string(),
   exportedAt: z.string().nullable(),
 });

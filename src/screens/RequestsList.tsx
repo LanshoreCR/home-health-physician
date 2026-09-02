@@ -2,7 +2,10 @@ import { useState, type CSSProperties } from 'react';
 import { Button } from '../ui/Button';
 import { Skeleton } from '../ui/Skeleton';
 import { StatusBadge } from '../ui/StatusBadge';
+import { formatCreated } from '../api/dates';
 import { useLabelFor, useStatusFilterOptions } from '../hooks/useLookups';
+import { ALL, nextSort, useRequesterOptions, useVisibleRequests } from '../hooks/useListView';
+import type { Sort, SortDir, SortKey } from '../hooks/useListView';
 import type { PhysicianRequestListItem, StatusFilter } from '../data/types';
 
 const DownloadIcon = (
@@ -17,7 +20,20 @@ const SearchIcon = (
 
 const COLS = 'minmax(0,1.5fr) minmax(0,1fr) minmax(0,0.85fr) minmax(0,0.5fr) minmax(0,1.15fr) minmax(0,0.7fr) minmax(0,1.25fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.5fr) minmax(0,1.5fr) minmax(0,0.85fr)';
 
-const HEADERS = ['Physician', 'NPI', 'Branch Code', 'Degree', 'Type', 'VA/Tricare', 'Patient', 'MRN', 'Patient Status', 'Requester', 'Status', 'Created'];
+const COLUMNS: { key: SortKey; label: string }[] = [
+  { key: 'physician', label: 'Physician' },
+  { key: 'npi', label: 'NPI' },
+  { key: 'branch', label: 'Branch Code' },
+  { key: 'degree', label: 'Degree' },
+  { key: 'physicianType', label: 'Type' },
+  { key: 'vaTricare', label: 'VA/Tricare' },
+  { key: 'patientName', label: 'Patient' },
+  { key: 'mrn', label: 'MRN' },
+  { key: 'patientStatus', label: 'Patient Status' },
+  { key: 'requesterName', label: 'Requester' },
+  { key: 'status', label: 'Status' },
+  { key: 'created', label: 'Created' },
+];
 
 const CELL: CSSProperties = { minWidth: 0, overflowWrap: 'anywhere' };
 
@@ -33,6 +49,10 @@ interface RequestsListProps {
   onStatusFilterChange: (value: StatusFilter) => void;
   branchFilter: string;
   onBranchFilterChange: (value: string) => void;
+  requesterFilter: string;
+  onRequesterFilterChange: (value: string) => void;
+  sort: Sort;
+  onSortChange: (value: Sort) => void;
   branches: string[];
   onOpen: (id: number) => void;
   onNew: () => void;
@@ -43,26 +63,43 @@ interface RequestsListProps {
 
 /**
  * RequestsList — portal home. Scannable table of physician requests with
- * status chips, working search + filters, and the New / Export primary actions.
+ * status chips, working search + filters, sortable headers, and the New /
+ * Export primary actions.
  */
 export function RequestsList({
   requests, totalCount, exportableCount, loading, error,
   search, onSearchChange,
   statusFilter, onStatusFilterChange,
   branchFilter, onBranchFilterChange,
+  requesterFilter, onRequesterFilterChange,
+  sort, onSortChange,
   branches,
   onOpen, onNew, onExport,
   canCreate, canExport,
 }: RequestsListProps) {
-  const branchOptions = [{ value: 'all', label: 'All' }, ...branches.map((b) => ({ value: b, label: b }))];
+  const branchOptions = [{ value: ALL, label: 'All' }, ...branches.map((b) => ({ value: b, label: b }))];
   const statusOptions = useStatusFilterOptions();
+  const requesterOptions = useRequesterOptions(requests, requesterFilter);
+  const visible = useVisibleRequests(requests, requesterFilter, sort);
+
+  /**
+   * Con el filtro de Requester puesto el conteo del servidor deja de describir
+   * lo que se ve, y exportableCount ya no se puede recalcular acá: la fila de
+   * lista no trae exportedAt. Así que se muestra lo que sí es cierto.
+   */
+  const filteredByRequester = requesterFilter !== ALL;
+
   return (
     <div style={{ background: 'var(--surface-page)', maxWidth: 'var(--page-max)', margin: '0 auto' }}>
       <div style={{ padding: '28px var(--page-gutter) 36px' }}>
         <header style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '24px' }}>
           <div>
             <h1 style={{ margin: '0 0 6px', fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 'var(--fs-page-title)', color: 'var(--text-heading)', letterSpacing: 'var(--ls-tight)' }}>Physician requests</h1>
-            <p style={{ margin: 0, fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-body)', color: 'var(--text-muted)' }}>{totalCount} requests · {exportableCount} ready to export</p>
+            <p style={{ margin: 0, fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-body)', color: 'var(--text-muted)' }}>
+              {filteredByRequester
+                ? `${visible.length} requests`
+                : `${totalCount} requests · ${exportableCount} ready to export`}
+            </p>
           </div>
           <div style={{ display: 'flex', gap: '10px' }}>
             {canExport && <Button variant="secondary" icon={DownloadIcon} onClick={onExport}>Export to Excel</Button>}
@@ -82,25 +119,63 @@ export function RequestsList({
           </div>
           <FilterSelect label="Status" value={statusFilter} options={statusOptions} onChange={(v) => onStatusFilterChange(v as StatusFilter)} />
           <FilterSelect label="Branch" value={branchFilter} options={branchOptions} onChange={onBranchFilterChange} />
+          <FilterSelect label="Requester" value={requesterFilter} options={requesterOptions} onChange={onRequesterFilterChange} />
         </div>
 
         <div style={{ overflowX: 'auto' }}>
           <div style={{ background: 'var(--surface-card)', border: '1px solid var(--border-card)', borderRadius: 'var(--radius-xl)', overflow: 'hidden', minWidth: '1440px' }}>
             <div style={{ display: 'grid', gridTemplateColumns: COLS, gap: '16px', padding: '14px 24px', background: 'var(--surface-subtle)', borderBottom: '1px solid var(--border-card)', fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 600, letterSpacing: 'var(--ls-eyebrow)', textTransform: 'uppercase', color: 'var(--text-faint)' }}>
-              {HEADERS.map((h) => <span key={h} style={CELL}>{h}</span>)}
+              {COLUMNS.map((column) => (
+                <SortHeader
+                  key={column.key}
+                  label={column.label}
+                  active={sort.key === column.key ? sort.dir : null}
+                  onClick={() => onSortChange(nextSort(sort, column.key))}
+                />
+              ))}
             </div>
             {loading && <TableSkeleton />}
             {!loading && error && <TableNotice text={error} tone="error" />}
-            {!loading && !error && requests.length === 0 && (
+            {!loading && !error && visible.length === 0 && (
               <TableNotice text="No requests match your filters." />
             )}
-            {!loading && !error && requests.map((r, i) => (
-              <Row key={r.id} r={r} last={i === requests.length - 1} onOpen={onOpen} />
+            {!loading && !error && visible.map((r, i) => (
+              <Row key={r.id} r={r} last={i === visible.length - 1} onOpen={onOpen} />
             ))}
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+function SortHeader({ label, active, onClick }: {
+  label: string;
+  /** La dirección cuando esta columna manda el orden, null cuando no. */
+  active: SortDir | null;
+  onClick: () => void;
+}) {
+  return (
+    <span
+      onClick={onClick}
+      aria-sort={active === null ? 'none' : active === 'asc' ? 'ascending' : 'descending'}
+      style={{ ...CELL, display: 'inline-flex', alignItems: 'center', gap: '4px', cursor: 'pointer', userSelect: 'none', color: active === null ? 'inherit' : 'var(--text-label)' }}
+    >
+      {label}
+      {active !== null && <SortCaret dir={active} />}
+    </span>
+  );
+}
+
+function SortCaret({ dir }: { dir: SortDir }) {
+  return (
+    <svg
+      width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
+      style={{ flexShrink: 0, transform: dir === 'asc' ? 'rotate(180deg)' : 'none' }}
+    >
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
   );
 }
 
@@ -116,7 +191,7 @@ function FilterSelect({ label, value, options, onChange }: {
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        style={{ flex: 1, height: '100%', border: 'none', background: 'transparent', appearance: 'none', WebkitAppearance: 'none', outline: 'none', fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-body)', color: 'var(--text-body)', cursor: 'pointer', padding: 0 }}
+        style={{ flex: 1, height: '100%', border: 'none', background: 'transparent', appearance: 'none', WebkitAppearance: 'none', outline: 'none', fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-body)', color: 'var(--text-body)', cursor: 'pointer', padding: 0, minWidth: 0, textOverflow: 'ellipsis' }}
       >
         {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>
@@ -126,7 +201,7 @@ function FilterSelect({ label, value, options, onChange }: {
 }
 
 const SKELETON_ROWS = 8;
-/** Un ancho por columna de HEADERS, para que las filas fantasma no queden todas iguales. */
+/** Un ancho por columna de COLUMNS, para que las filas fantasma no queden todas iguales. */
 const SKELETON_WIDTHS = ['64%', '52%', '46%', '34%', '58%', '30%', '70%', '48%', '56%', '62%', '78%', '50%'];
 const STATUS_COL = 10;
 
@@ -176,7 +251,7 @@ function Row({ r, last, onOpen }: { r: PhysicianRequestListItem; last: boolean; 
       <span style={CELL}>{labelFor('patientStatuses', r.patientStatus)}</span>
       <span style={CELL}>{r.requesterName}</span>
       <StatusBadge status={r.status} label={labelFor('requestStatuses', r.status)} style={{ minWidth: 0, whiteSpace: 'normal' }} />
-      <span style={{ ...CELL, color: 'var(--text-muted)' }}>{r.created}</span>
+      <span style={{ ...CELL, color: 'var(--text-muted)' }}>{formatCreated(r.created)}</span>
     </div>
   );
 }

@@ -20,6 +20,7 @@ import { ApiError, errorMessage } from './api/client';
 import { toDraft } from './api/schemas';
 // import { TRIGGER_STATUSES } from './data/types';
 import type { PhysicianRequest, RequestDraft, RequestStatus, StatusFilter } from './data/types';
+import type { Sort } from './hooks/useListView';
 import { useRole } from './auth/useRole';
 import { signOut } from './auth/okta';
 import { initialsOf, useSessionStore } from './store/session';
@@ -45,6 +46,9 @@ export function App() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [branchFilter, setBranchFilter] = useState('all');
+  /** Requester y orden se resuelven en el cliente: no viajan a useRequests. */
+  const [requesterFilter, setRequesterFilter] = useState('all');
+  const [sort, setSort] = useState<Sort>({ key: 'created', dir: 'desc' });
 
   const list = useRequests(search, statusFilter, branchFilter);
   const branches = useBranches();
@@ -182,6 +186,10 @@ export function App() {
           onStatusFilterChange={setStatusFilter}
           branchFilter={branchFilter}
           onBranchFilterChange={setBranchFilter}
+          requesterFilter={requesterFilter}
+          onRequesterFilterChange={setRequesterFilter}
+          sort={sort}
+          onSortChange={setSort}
           branches={branches}
           onOpen={openDetail}
           onNew={startCreate}
