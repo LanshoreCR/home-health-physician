@@ -15,7 +15,7 @@ import {
   setRequestStatus,
   updateRequest,
 } from './api/physicianRequests';
-import { exportBatch } from './api/export';
+import { exportBatch, type ExportRange } from './api/export';
 import { ApiError, errorMessage } from './api/client';
 import { toDraft } from './api/schemas';
 // import { TRIGGER_STATUSES } from './data/types';
@@ -138,11 +138,11 @@ export function App() {
     }
   };
 
-  const confirmExport = async () => {
+  const confirmExport = async (range: ExportRange) => {
     setExporting(true);
     try {
-      const downloaded = await exportBatch();
-      if (!downloaded) window.alert('There is nothing to export — no request has been approved yet.');
+      const downloaded = await exportBatch(range);
+      if (!downloaded) window.alert('There is nothing to export — no approved request is waiting, and none was exported in that range.');
       invalidate();
     } catch (err) {
       window.alert(errorMessage(err));
@@ -241,7 +241,6 @@ export function App() {
 
       {exportOpen && (
         <ExportDialog
-          count={list.exportableCount}
           exporting={exporting}
           onCancel={() => setExportOpen(false)}
           onConfirm={confirmExport}

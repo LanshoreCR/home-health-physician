@@ -29,3 +29,13 @@ export function exportFilename(): string {
   const date = `${now.getUTCFullYear()}-${pad(now.getUTCMonth() + 1)}-${pad(now.getUTCDate())}`;
   return `PAT_Export_${date}_${pad(now.getUTCHours())}${pad(now.getUTCMinutes())}.xlsx`;
 }
+
+/**
+ * El <input type="date"> habla en fecha local: con getUTCDate() la tarde de
+ * Costa Rica ya arrancaría el rango en el día siguiente.
+ */
+export function todayInput(): string {
+  const now = new Date();
+  const pad = (value: number) => String(value).padStart(2, '0');
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+}
