@@ -4,6 +4,7 @@ import { Card } from '../ui/Card';
 import { Select } from '../ui/Select';
 import { Skeleton } from '../ui/Skeleton';
 import { StatusBadge } from '../ui/StatusBadge';
+import { formatCreated } from '../api/dates';
 import { EXPORTABLE_STATUSES } from '../data/types';
 // import { TRIGGER_STATUSES } from '../data/types';
 import { statusColors, statusSub } from '../data/labels';
@@ -84,7 +85,7 @@ export function RequestDetail({
             <span style={{ color: 'var(--slate-300)' }}>·</span>
             <span>Branch <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-body)' }}>{r.branch}</span></span>
             <span style={{ color: 'var(--slate-300)' }}>·</span>
-            <span>Created {r.created}</span>
+            <span>Created {formatCreated(r.created)}</span>
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -285,7 +286,7 @@ function Timeline({ request, exportable }: { request: PhysicianRequest; exportab
   const exported = request.exportedAt !== null;
   return (
     <div>
-      <Step color="var(--success-500)" title="Submitted" sub={`${request.created} · ${request.submitter}`} />
+      <Step color="var(--success-500)" title="Submitted" sub={`${formatCreated(request.created)} · ${request.submitter}`} />
       <Step color={colors.dot} ring={colors.bg} title={labelFor('requestStatuses', request.status)} sub={statusSub(request.status)} />
       <Step
         color={exported || exportable ? 'var(--status-newreq-dot)' : '#fff'}
