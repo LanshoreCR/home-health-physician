@@ -247,10 +247,10 @@ export function RequestForm({ mode, values, submitting, error, fieldErrors, onCa
               <FormField name="specialty" label="Specialty">
                 {(field, invalid) => <Input {...field} invalid={invalid} />}
               </FormField>
-              <FormField name="taxonomy" label="Taxonomy" hint="Defaults to None on import if blank">
+              <FormField name="taxonomy" label="Taxonomy" hint="Defaults to *NONE on import if blank">
                 {(field, invalid) => <Input {...field} invalid={invalid} />}
               </FormField>
-              <FormField name="physicianGroup" label="Physician group" hint="Defaults to None on import if blank">
+              <FormField name="physicianGroup" label="Physician group" hint="Defaults to *NONE on import if blank">
                 {(field, invalid) => <Input {...field} onChange={mirrorTo(field, 'officePhysicianGroup')} invalid={invalid} />}
               </FormField>
             </div>

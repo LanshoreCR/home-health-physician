@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { formatCreated } from './dates';
 
 /**
  * Fuente única de verdad del contrato con home-health-physician-api.
@@ -19,11 +18,10 @@ export const requestStatusSchema = z.enum([
   'special',
   'denied',
   'approved',
+  'imported',
 ]);
 
 // ---------------------------------------------------------------- lecturas
-
-const apiDate = z.string().transform(formatCreated);
 
 export const physicianRequestListItemSchema = z.object({
   id: z.number(),
@@ -39,7 +37,8 @@ export const physicianRequestListItemSchema = z.object({
   patientStatus: z.string(),
   requesterName: z.string(),
   status: requestStatusSchema,
-  created: apiDate,
+  /** Crudo: la lista ordena por esta columna, y el formato es cosa de la pantalla. */
+  created: z.string(),
 });
 
 export const physicianRequestListSchema = z.object({
@@ -83,7 +82,7 @@ export const physicianRequestSchema = z.object({
   admissionCoordinator: z.string(),
   additionalDetails: z.string(),
   status: requestStatusSchema,
-  created: apiDate,
+  created: z.string(),
   submitter: z.string(),
   exportedAt: z.string().nullable(),
 });
@@ -98,6 +97,13 @@ export const lookupsSchema = z.object({
   orderNotifMethods: z.array(lookupItemSchema),
   states: z.array(lookupItemSchema),
   requestStatuses: z.array(lookupItemSchema),
+});
+
+export const currentUserSchema = z.object({
+  employeeId: z.string(),
+  name: z.string(),
+  email: z.string(),
+  roles: z.array(z.string()),
 });
 
 export const branchesSchema = z.array(z.string());
@@ -159,7 +165,7 @@ export const saveRequestSchema = z.object({
   physicianGroup: optional(TEXT_MAX),
   vitalAlerts: required(20),
   orderNotif: required(20),
-  branch: required(20),
+  branch: required(25),
   address: required(TEXT_MAX),
   city: required(TEXT_MAX),
   state: required(20),
@@ -178,6 +184,7 @@ export type SaveRequestBody = z.infer<typeof saveRequestSchema>;
 export type PhysicianRequest = z.infer<typeof physicianRequestSchema>;
 export type PhysicianRequestListItem = z.infer<typeof physicianRequestListItemSchema>;
 export type PhysicianRequestList = z.infer<typeof physicianRequestListSchema>;
+export type CurrentUser = z.infer<typeof currentUserSchema>;
 export type RequestStatus = z.infer<typeof requestStatusSchema>;
 export type LookupItem = z.infer<typeof lookupItemSchema>;
 export type Lookups = z.infer<typeof lookupsSchema>;

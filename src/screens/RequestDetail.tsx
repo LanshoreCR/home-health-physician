@@ -4,6 +4,7 @@ import { Card } from '../ui/Card';
 import { Select } from '../ui/Select';
 import { Skeleton } from '../ui/Skeleton';
 import { StatusBadge } from '../ui/StatusBadge';
+import { formatCreated } from '../api/dates';
 import { EXPORTABLE_STATUSES } from '../data/types';
 // import { TRIGGER_STATUSES } from '../data/types';
 import { statusColors, statusSub } from '../data/labels';
@@ -51,13 +52,19 @@ interface RequestDetailProps {
   onSetStatus: (status: RequestStatus) => void;
   onEdit: () => void;
   onDelete: () => void;
+  canEdit: boolean;
+  canDelete: boolean;
+  canSetStatus: boolean;
 }
 
 /**
  * RequestDetail — review view. Prominent status, grouped read-only data,
  * a status timeline, and the reviewer's Edit + status disposition controls.
  */
-export function RequestDetail({ request, statusPending, onSetStatus, onEdit, onDelete }: RequestDetailProps) {
+export function RequestDetail({
+  request, statusPending, onSetStatus, onEdit, onDelete,
+  canEdit, canDelete, canSetStatus,
+}: RequestDetailProps) {
   const r = request;
   const { lookups } = useLookups();
   const labelFor = useLabelFor();
@@ -78,13 +85,13 @@ export function RequestDetail({ request, statusPending, onSetStatus, onEdit, onD
             <span style={{ color: 'var(--slate-300)' }}>·</span>
             <span>Branch <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-body)' }}>{r.branch}</span></span>
             <span style={{ color: 'var(--slate-300)' }}>·</span>
-            <span>Created {r.created}</span>
+            <span>Created {formatCreated(r.created)}</span>
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Button variant="danger" size="lg" icon={TrashIcon} onClick={onDelete}>Delete</Button>
-          <Button variant="secondary" size="lg" icon={EditIcon} onClick={onEdit}>Edit</Button>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          {canDelete && <Button variant="danger" size="lg" icon={TrashIcon} onClick={onDelete}>Delete</Button>}
+          {canEdit && <Button variant="secondary" size="lg" icon={EditIcon} onClick={onEdit}>Edit</Button>}
+          {canSetStatus && <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <span style={{ fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-label)', color: 'var(--text-faint)' }}>{statusPending ? 'Saving status…' : 'Set status'}</span>
             <Select
               value={r.status}
@@ -94,7 +101,7 @@ export function RequestDetail({ request, statusPending, onSetStatus, onEdit, onD
               onChange={(e) => onSetStatus(e.target.value as RequestStatus)}
               style={{ minWidth: '220px' }}
             />
-          </div>
+          </div>}
         </div>
       </div>
 
@@ -279,7 +286,7 @@ function Timeline({ request, exportable }: { request: PhysicianRequest; exportab
   const exported = request.exportedAt !== null;
   return (
     <div>
-      <Step color="var(--success-500)" title="Submitted" sub={`${request.created} · ${request.submitter}`} />
+      <Step color="var(--success-500)" title="Submitted" sub={`${formatCreated(request.created)} · ${request.submitter}`} />
       <Step color={colors.dot} ring={colors.bg} title={labelFor('requestStatuses', request.status)} sub={statusSub(request.status)} />
       <Step
         color={exported || exportable ? 'var(--status-newreq-dot)' : '#fff'}

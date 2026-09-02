@@ -1,18 +1,34 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { ensureSession } from './okta';
+import { getCurrentUser } from '../api/currentUser';
+import { NoAccess } from '../screens/NoAccess';
+import { loadCatalogs } from '../store/catalogs';
+import { hasAccess, useSessionStore } from '../store/session';
+import { ensureSession, signOut } from './okta';
 
-type Phase = 'checking' | 'ready' | 'failed';
+type Phase = 'checking' | 'ready' | 'blocked' | 'failed';
 
 export function AuthGate({ children }: { children: ReactNode }) {
   const [phase, setPhase] = useState<Phase>('checking');
   const [error, setError] = useState('');
+  const user = useSessionStore((state) => state.user);
 
   useEffect(() => {
     let active = true;
 
     ensureSession()
-      .then(() => {
-        if (active) setPhase('ready');
+      .then(() => getCurrentUser())
+      .then((current) => {
+        if (!active) return;
+        useSessionStore.getState().setUser(current);
+
+        if (!hasAccess(current)) {
+          setPhase('blocked');
+          return;
+        }
+
+        /** Después del rol, no antes: sin rol los catálogos vuelven en 403. */
+        void loadCatalogs();
+        setPhase('ready');
       })
       .catch((err: unknown) => {
         if (!active) return;
@@ -27,6 +43,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
 
   if (phase === 'checking') return <Notice text="Signing you in…" />;
   if (phase === 'failed') return <Notice text={error} retry />;
+  if (phase === 'blocked') return <NoAccess name={user?.name ?? 'Your account'} onSignOut={() => void signOut()} />;
   return <>{children}</>;
 }
 

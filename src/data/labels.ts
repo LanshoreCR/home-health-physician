@@ -12,6 +12,7 @@ const SUB: Record<string, string> = {
   special: 'Escalated · awaiting sign-off',
   denied: 'Denied · requester notified',
   approved: 'Approved · ready to export',
+  imported: 'In HCHB · out of the export batch',
 };
 
 export function statusSub(status: string): string {
