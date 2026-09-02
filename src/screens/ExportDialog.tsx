@@ -1,30 +1,38 @@
+import { useState } from 'react';
 import { Button } from '../ui/Button';
-import { exportFilename } from '../api/dates';
+import { Field } from '../ui/Field';
+import { Input } from '../ui/Input';
+import { exportFilename, todayInput } from '../api/dates';
 import { statusColors } from '../data/labels';
 import { EXPORTABLE_STATUSES } from '../data/types';
 import { useExportableLabels } from '../hooks/useLookups';
+import type { ExportRange } from '../api/export';
 
 const DownloadIcon = (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
 );
 
 interface ExportDialogProps {
-  count: number;
   exporting: boolean;
   onCancel: () => void;
-  onConfirm: () => void;
+  onConfirm: (range: ExportRange) => void;
 }
 
 /**
  * ExportDialog — confirms exporting the clean requests to an HCHB-formatted
  * Excel file. Held requests are excluded from the batch.
- * El servidor arma el archivo y estampa ExportedAt, así que el batch real lo
- * decide él: aquí solo se confirma el conteo.
+ * El servidor arma el archivo y decide el batch: acá solo se elige el rango.
+ * No se muestra un conteo porque la fila de lista no trae exportedAt y el
+ * conteo del servidor describe la cola entera, no el rango.
  */
-export function ExportDialog({ count, exporting, onCancel, onConfirm }: ExportDialogProps) {
+export function ExportDialog({ exporting, onCancel, onConfirm }: ExportDialogProps) {
+  const [from, setFrom] = useState(todayInput);
+  const [to, setTo] = useState(todayInput);
   const filename = exportFilename();
   const exportableLabels = useExportableLabels();
   const highlight = statusColors(EXPORTABLE_STATUSES[0]).fg;
+  const missing = from === '' || to === '';
+  const backwards = !missing && from > to;
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
       <div style={{ width: '520px', background: 'var(--surface-card)', borderRadius: 'var(--radius-2xl)', boxShadow: 'var(--shadow-dialog)', overflow: 'hidden' }}>
@@ -36,8 +44,22 @@ export function ExportDialog({ count, exporting, onCancel, onConfirm }: ExportDi
             <h2 style={{ margin: 0, fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 'var(--fs-dialog-title)', color: 'var(--text-heading)' }}>Export ready requests</h2>
           </div>
           <p style={{ margin: '0 0 20px 50px', fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-body)', lineHeight: 'var(--lh-body)', color: 'var(--text-muted)' }}>
-            {count} clean <span style={{ fontWeight: 600, color: highlight }}>{exportableLabels('and')}</span> requests will be exported to an HCHB-formatted Excel file. Held requests are excluded. Requests that went out in an earlier batch are included again.
+            Every clean <span style={{ fontWeight: 600, color: highlight }}>{exportableLabels('and')}</span> request that has never been exported goes into the file, plus the ones already exported within the dates below. Held requests are excluded.
           </p>
+        </div>
+
+        <div style={{ display: 'flex', gap: '12px', margin: '0 26px 16px' }}>
+          <Field label="Exported from" htmlFor="export-from" style={{ flex: 1 }}>
+            <Input id="export-from" type="date" value={from} invalid={backwards} onChange={(e) => setFrom(e.target.value)} />
+          </Field>
+          <Field
+            label="Exported to"
+            htmlFor="export-to"
+            hint={backwards ? 'The end date cannot be earlier than the start date.' : undefined}
+            style={{ flex: 1 }}
+          >
+            <Input id="export-to" type="date" value={to} invalid={backwards} onChange={(e) => setTo(e.target.value)} />
+          </Field>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '0 26px', padding: '12px 14px', background: 'var(--surface-subtle)', borderRadius: 'var(--radius-lg)' }}>
@@ -46,14 +68,14 @@ export function ExportDialog({ count, exporting, onCancel, onConfirm }: ExportDi
           </span>
           <div style={{ flex: 1 }}>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-mono)', color: 'var(--text-heading)' }}>{filename}</div>
-            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-caption)', color: 'var(--text-faint)' }}>HCHB upload format · {count} rows</div>
+            <div style={{ fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-caption)', color: 'var(--text-faint)' }}>HCHB upload format</div>
           </div>
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', padding: '20px 26px 24px' }}>
           <Button variant="ghost" onClick={onCancel} disabled={exporting}>Cancel</Button>
-          <Button variant="success" icon={DownloadIcon} onClick={onConfirm} disabled={exporting || count === 0}>
-            {exporting ? 'Exporting…' : `Export ${count} requests`}
+          <Button variant="success" icon={DownloadIcon} onClick={() => onConfirm({ from, to })} disabled={exporting || missing || backwards}>
+            {exporting ? 'Exporting…' : 'Export batch'}
           </Button>
         </div>
       </div>
