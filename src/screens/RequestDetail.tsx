@@ -88,11 +88,11 @@ export function RequestDetail({
             <span>Created {formatCreated(r.created)}</span>
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: '10px' }}>
           {canDelete && <Button variant="danger" size="lg" icon={TrashIcon} onClick={onDelete}>Delete</Button>}
           {canEdit && <Button variant="secondary" size="lg" icon={EditIcon} onClick={onEdit}>Edit</Button>}
-          {canSetStatus && <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <span style={{ fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-label)', color: 'var(--text-faint)' }}>{statusPending ? 'Saving status…' : 'Set status'}</span>
+          {canSetStatus && <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '-1px' }}>
+            <span style={{ fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-label)', color: 'var(--text-faint)', lineHeight: 1.2 }}>{statusPending ? 'Saving status…' : 'Set status'}</span>
             <Select
               value={r.status}
               options={statusOptions}
