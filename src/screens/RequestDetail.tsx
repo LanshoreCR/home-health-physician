@@ -80,10 +80,10 @@ export function RequestDetail({
             <h1 style={{ margin: 0, fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 'var(--fs-page-title)', color: 'var(--text-heading)', letterSpacing: 'var(--ls-tight)' }}>{r.first} {r.last}, {labelFor('degrees', r.degree)}</h1>
             <StatusBadge status={r.status} size="md" label={labelFor('requestStatuses', r.status)} />
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '18px', fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-body)', color: 'var(--text-muted)' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', columnGap: '18px', rowGap: '4px', fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-body)', color: 'var(--text-muted)' }}>
             <span>NPI <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-body)' }}>{r.npi}</span></span>
             <span style={{ color: 'var(--slate-300)' }}>·</span>
-            <span>Branch <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-body)' }}>{r.branch}</span></span>
+            <span style={{ minWidth: 0, overflowWrap: 'anywhere' }}>Branch <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-body)' }}>{r.branch}</span></span>
             <span style={{ color: 'var(--slate-300)' }}>·</span>
             <span>Created {formatCreated(r.created)}</span>
           </div>

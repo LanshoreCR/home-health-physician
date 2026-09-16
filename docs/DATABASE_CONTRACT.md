@@ -59,7 +59,7 @@ One row per request. Enumerated fields are `...Id` FKs into the lookup tables in
 | 20 | `vitalAlertMethodId` | `INT` FK → `VitalAlertMethod` | ✅ | |
 | 21 | `orderNotifMethodId` | `INT` FK → `OrderNotifMethod` | ✅ | |
 | | **Physician's office** | | | |
-| 22 | `branch` | `NVARCHAR(50)` | ✅ | Branch code (e.g. `ADO-022`). The app and the API cap input at 25 characters; the column carries headroom so the next widening does not need another index drop/recreate. |
+| 22 | `branch` | `NVARCHAR(255)` | ✅ | Branch code (e.g. `ADO-022`). The app, the API and the column all cap it at 255 characters. |
 | 23 | `address` | `NVARCHAR(200)` | ✅ | |
 | 24 | `city` | `NVARCHAR(100)` | ✅ | |
 | 25 | `stateId` | `INT` FK → `USState` | ✅ | |
@@ -210,7 +210,7 @@ List screen with search + filters. All filter params optional / nullable. Exclud
 ```
 IN  : @search   NVARCHAR(200) = NULL   -- matches first+last, npi, patientName, mrn
       @status   NVARCHAR(20)  = NULL   -- RequestStatus code, or NULL = all
-      @branch   NVARCHAR(20)  = NULL   -- branch code, or NULL = all
+      @branch   NVARCHAR(255) = NULL   -- branch code, or NULL = all
 OUT : list rows (WHERE isDeleted = 0) — at minimum:
       id, first, last, degree(label), npi, branch, patientName, mrn,
       status(code+label), created, submitter, exportedAt
