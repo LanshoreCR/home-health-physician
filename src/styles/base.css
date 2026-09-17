@@ -87,6 +87,8 @@ body {
   color: var(--text-label);
 }
 .role .d { width: 7px; height: 7px; border-radius: 50%; }
+.role .title { font-weight: 500; color: var(--text-muted); }
+.role .title::before { content: '·'; margin-right: 8px; }
 
 .form-grid {
   display: grid;
