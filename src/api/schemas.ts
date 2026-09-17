@@ -104,6 +104,8 @@ export const currentUserSchema = z.object({
   name: z.string(),
   email: z.string(),
   jobTitle: z.string().default(''),
+  department: z.string().default(''),
+  companyName: z.string().default(''),
   roles: z.array(z.string()),
 });
 
