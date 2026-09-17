@@ -6,6 +6,7 @@ interface AppBarProps {
   crumb?: ReactNode;
   name: string;
   jobTitle: string;
+  department: string;
   initials: string;
   onSignOut: () => void;
 }
@@ -14,7 +15,7 @@ interface AppBarProps {
  * AppBar — sticky top chrome. Shows the brand on the list, or a breadcrumb
  * back to Requests on detail / form. Right side carries the signed-in user.
  */
-export function AppBar({ crumb, name, jobTitle, initials, onSignOut }: AppBarProps) {
+export function AppBar({ crumb, name, jobTitle, department, initials, onSignOut }: AppBarProps) {
   return (
     <div className="appbar">
       <div className="appbar-inner">
@@ -34,6 +35,7 @@ export function AppBar({ crumb, name, jobTitle, initials, onSignOut }: AppBarPro
             <span className="d" style={{ background: 'var(--blue-500)' }} />
             {name}
             {jobTitle && <span className="title">{jobTitle}</span>}
+            {department && <span className="title">{department}</span>}
           </div>
           <Avatar initials={initials} />
           <Button variant="ghost" size="sm" onClick={onSignOut}>Sign out</Button>

@@ -170,6 +170,7 @@ export function App() {
         crumb={crumb}
         name={user?.name ?? ''}
         jobTitle={user?.jobTitle ?? ''}
+        department={user?.department ?? ''}
         initials={initialsOf(user?.name ?? '')}
         onSignOut={() => void signOut()}
       />
