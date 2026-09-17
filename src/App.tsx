@@ -169,6 +169,7 @@ export function App() {
       <AppBar
         crumb={crumb}
         name={user?.name ?? ''}
+        jobTitle={user?.jobTitle ?? ''}
         initials={initialsOf(user?.name ?? '')}
         onSignOut={() => void signOut()}
       />
