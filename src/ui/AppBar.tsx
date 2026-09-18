@@ -16,6 +16,8 @@ interface AppBarProps {
  * back to Requests on detail / form. Right side carries the signed-in user.
  */
 export function AppBar({ crumb, name, jobTitle, department, initials, onSignOut }: AppBarProps) {
+  const details = [jobTitle, department].filter(Boolean).join(' · ');
+
   return (
     <div className="appbar">
       <div className="appbar-inner">
@@ -33,9 +35,10 @@ export function AppBar({ crumb, name, jobTitle, department, initials, onSignOut 
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
           <div className="role">
             <span className="d" style={{ background: 'var(--blue-500)' }} />
-            {name}
-            {jobTitle && <span className="title">{jobTitle}</span>}
-            {department && <span className="title">{department}</span>}
+            <div className="who">
+              <div className="name">{name}</div>
+              {details && <div className="details">{details}</div>}
+            </div>
           </div>
           <Avatar initials={initials} />
           <Button variant="ghost" size="sm" onClick={onSignOut}>Sign out</Button>
