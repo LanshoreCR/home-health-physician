@@ -208,13 +208,20 @@ function FilterSelect({ label, value, options, onChange }: {
   options: { value: string; label: string }[];
   onChange: (value: string) => void;
 }) {
+  /**
+   * El tope de ancho no es estético: un <select> toma su ancho natural del
+   * <option> más largo, y branch llega de la base con hasta 255 caracteres, así
+   * que sin esto un solo valor largo estira el control y desarma la fila. El
+   * select ya trae minWidth 0 y ellipsis para encogerse dentro del tope.
+   */
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: '180px', height: 'var(--control-h)', padding: '0 12px', background: 'var(--surface-card)', border: '1px solid var(--border-field)', borderRadius: 'var(--radius-md)', fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-body)', color: 'var(--text-body)' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: '180px', maxWidth: '260px', height: 'var(--control-h)', padding: '0 12px', background: 'var(--surface-card)', border: '1px solid var(--border-field)', borderRadius: 'var(--radius-md)', fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-body)', color: 'var(--text-body)' }}>
       <span style={{ color: 'var(--text-faint)', whiteSpace: 'nowrap' }}>{label}:</span>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        style={{ flex: 1, height: '100%', border: 'none', background: 'transparent', appearance: 'none', WebkitAppearance: 'none', outline: 'none', fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-body)', color: 'var(--text-body)', cursor: 'pointer', padding: 0, minWidth: 0, textOverflow: 'ellipsis' }}
+        title={options.find((o) => o.value === value)?.label ?? value}
+        style={{ flex: 1, width: 0, height: '100%', border: 'none', background: 'transparent', appearance: 'none', WebkitAppearance: 'none', outline: 'none', fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-body)', color: 'var(--text-body)', cursor: 'pointer', padding: 0, minWidth: 0, textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden' }}
       >
         {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>
