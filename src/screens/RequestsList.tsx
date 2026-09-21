@@ -20,7 +20,7 @@ const SearchIcon = (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--slate-400)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
 );
 
-const COLS = 'minmax(0,1.5fr) minmax(0,1fr) minmax(0,0.85fr) minmax(0,0.5fr) minmax(0,1.15fr) minmax(0,0.7fr) minmax(0,1.25fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.5fr) minmax(0,1.5fr) minmax(0,0.85fr) minmax(0,1.1fr)';
+const COLS = 'minmax(0,1.1fr) minmax(0,1.5fr) minmax(0,1fr) minmax(0,0.85fr) minmax(0,0.5fr) minmax(0,1.15fr) minmax(0,0.7fr) minmax(0,1.25fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.5fr) minmax(0,1.5fr) minmax(0,0.85fr)';
 
 const LOADED_LABEL = 'Loaded to Patients Chart';
 
@@ -139,6 +139,7 @@ export function RequestsList({
         <div style={{ overflowX: 'auto' }}>
           <div style={{ background: 'var(--surface-card)', border: '1px solid var(--border-card)', borderRadius: 'var(--radius-xl)', overflow: 'hidden', minWidth: '1600px' }}>
             <div style={{ display: 'grid', gridTemplateColumns: COLS, gap: '16px', padding: '14px 24px', background: 'var(--surface-subtle)', borderBottom: '1px solid var(--border-card)', fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 600, letterSpacing: 'var(--ls-eyebrow)', textTransform: 'uppercase', color: 'var(--text-faint)' }}>
+              <span style={CELL}>{LOADED_LABEL}</span>
               {COLUMNS.map((column) => (
                 <SortHeader
                   key={column.key}
@@ -147,7 +148,6 @@ export function RequestsList({
                   onClick={() => onSortChange(nextSort(sort, column.key))}
                 />
               ))}
-              <span style={CELL}>{LOADED_LABEL}</span>
             </div>
             {loading && <TableSkeleton />}
             {!loading && error && <TableNotice text={error} tone="error" />}
@@ -225,8 +225,8 @@ function FilterSelect({ label, value, options, onChange }: {
 
 const SKELETON_ROWS = 8;
 /** Un ancho por columna de COLUMNS, para que las filas fantasma no queden todas iguales. */
-const SKELETON_WIDTHS = ['64%', '52%', '46%', '34%', '58%', '30%', '70%', '48%', '56%', '62%', '78%', '50%', '18px'];
-const STATUS_COL = 10;
+const SKELETON_WIDTHS = ['18px', '64%', '52%', '46%', '34%', '58%', '30%', '70%', '48%', '56%', '62%', '78%', '50%'];
+const STATUS_COL = 11;
 
 function TableSkeleton() {
   return (
@@ -270,6 +270,7 @@ function Row({ r, last, onOpen, onMarkLoaded, busy, canMarkLoaded }: {
       onMouseLeave={() => setHover(false)}
       style={{ display: 'grid', gridTemplateColumns: COLS, gap: '16px', padding: '18px 24px', alignItems: 'center', borderBottom: last ? 'none' : '1px solid var(--border-divider)', background: hover ? '#f8fbff' : 'transparent', fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-body)', color: 'var(--text-body)', cursor: 'pointer' }}
     >
+      <LoadedCell r={r} busy={busy} canMarkLoaded={canMarkLoaded} onMarkLoaded={onMarkLoaded} />
       <span style={{ ...CELL, fontWeight: 600 }}>{r.first} {r.last}</span>
       <span style={{ ...CELL, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-mono)', color: 'var(--text-label)' }}>{r.npi}</span>
       <span style={{ ...CELL, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-mono)', color: 'var(--text-label)' }}>{r.branch}</span>
@@ -289,9 +290,16 @@ function Row({ r, last, onOpen, onMarkLoaded, busy, canMarkLoaded }: {
       </span>
       <StatusBadge status={r.status} label={labelFor('requestStatuses', r.status)} style={{ minWidth: 0, whiteSpace: 'normal' }} />
       <span style={{ ...CELL, color: 'var(--text-muted)' }}>{formatCreated(r.created)}</span>
-      <LoadedCell r={r} busy={busy} canMarkLoaded={canMarkLoaded} onMarkLoaded={onMarkLoaded} />
     </div>
   );
+}
+
+/** El checkbox deshabilitado no dice por qué lo está; el tooltip sí. */
+function loadedHint(status: PhysicianRequestListItem['status'], canMarkLoaded: boolean): string {
+  if (status === COMPLETED) return 'Already loaded to the patient chart';
+  if (status !== IMPORTED) return 'Available once the request is imported to HCHB';
+  if (!canMarkLoaded) return 'You do not have access to change this';
+  return 'Mark as loaded to the patient chart';
 }
 
 /**
@@ -308,7 +316,11 @@ function LoadedCell({ r, busy, canMarkLoaded, onMarkLoaded }: {
   const checked = r.status === COMPLETED;
   const disabled = busy || !canMarkLoaded || r.status !== IMPORTED;
   return (
-    <span style={{ ...CELL, display: 'flex' }} onClick={(e) => e.stopPropagation()}>
+    <span
+      style={{ ...CELL, display: 'flex' }}
+      title={loadedHint(r.status, canMarkLoaded)}
+      onClick={(e) => e.stopPropagation()}
+    >
       <Checkbox
         label=""
         ariaLabel={`${LOADED_LABEL} — ${r.first} ${r.last}`}
