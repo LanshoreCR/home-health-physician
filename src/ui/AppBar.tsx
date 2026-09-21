@@ -5,6 +5,8 @@ import { Button } from './Button';
 interface AppBarProps {
   crumb?: ReactNode;
   name: string;
+  jobTitle: string;
+  department: string;
   initials: string;
   onSignOut: () => void;
 }
@@ -13,7 +15,9 @@ interface AppBarProps {
  * AppBar — sticky top chrome. Shows the brand on the list, or a breadcrumb
  * back to Requests on detail / form. Right side carries the signed-in user.
  */
-export function AppBar({ crumb, name, initials, onSignOut }: AppBarProps) {
+export function AppBar({ crumb, name, jobTitle, department, initials, onSignOut }: AppBarProps) {
+  const details = [jobTitle, department].filter(Boolean).join(' · ');
+
   return (
     <div className="appbar">
       <div className="appbar-inner">
@@ -29,7 +33,13 @@ export function AppBar({ crumb, name, initials, onSignOut }: AppBarProps) {
           </div>
         )}
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          <div className="role"><span className="d" style={{ background: 'var(--blue-500)' }} />{name}</div>
+          <div className="role">
+            <span className="d" style={{ background: 'var(--blue-500)' }} />
+            <div className="who">
+              <div className="name">{name}</div>
+              {details && <div className="details">{details}</div>}
+            </div>
+          </div>
           <Avatar initials={initials} />
           <Button variant="ghost" size="sm" onClick={onSignOut}>Sign out</Button>
         </div>

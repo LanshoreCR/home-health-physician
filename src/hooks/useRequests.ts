@@ -22,7 +22,7 @@ function useDebounced(value: string, ms: number): string {
   return debounced;
 }
 
-export function useRequests(search: string, status: StatusFilter, branch: string) {
+export function useRequests(search: string, status: StatusFilter, branch: string, requestedSource: string) {
   const [data, setData] = useState<ListState>(EMPTY);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -35,7 +35,7 @@ export function useRequests(search: string, status: StatusFilter, branch: string
     setLoading(true);
     setError(null);
 
-    listRequests({ search: debouncedSearch, status, branch }, controller.signal)
+    listRequests({ search: debouncedSearch, status, branch, requestedSource }, controller.signal)
       .then((result) => {
         setData(result);
         setLoading(false);
@@ -48,7 +48,7 @@ export function useRequests(search: string, status: StatusFilter, branch: string
       });
 
     return () => controller.abort();
-  }, [debouncedSearch, status, branch, reloadKey]);
+  }, [debouncedSearch, status, branch, requestedSource, reloadKey]);
 
   const refetch = useCallback(() => setReloadKey((key) => key + 1), []);
 

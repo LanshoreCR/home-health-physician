@@ -23,6 +23,7 @@ export interface ListFilters {
   search?: string;
   status?: StatusFilter;
   branch?: string;
+  requestedSource?: string;
 }
 
 /** 'all' no se manda: el proc hace match exacto y devolvería cero filas. */
@@ -38,6 +39,7 @@ export async function listRequests(
     search: filters.search,
     status: omitAll(filters.status),
     branch: omitAll(filters.branch),
+    requestedSource: omitAll(filters.requestedSource),
   });
   const data = await api.get<unknown>(`${PATH}${query}`, signal);
   return parseResponse(physicianRequestListSchema, data, 'listRequests');

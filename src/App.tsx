@@ -19,6 +19,7 @@ import { exportBatch, type ExportRange } from './api/export';
 import { ApiError, errorMessage } from './api/client';
 import { toDraft } from './api/schemas';
 // import { TRIGGER_STATUSES } from './data/types';
+import { COMPLETED } from './data/types';
 import type { PhysicianRequest, RequestDraft, RequestStatus, StatusFilter } from './data/types';
 import type { Sort } from './hooks/useListView';
 import { useRole } from './auth/useRole';
@@ -39,6 +40,7 @@ export function App() {
   const [formError, setFormError] = useState<string | null>(null);
   const [formFieldErrors, setFormFieldErrors] = useState<Record<string, string[]>>({});
   const [statusPending, setStatusPending] = useState(false);
+  const [loadingId, setLoadingId] = useState<number | null>(null);
   // Email deshabilitado hasta que existan las credenciales de Microsoft Graph.
   // const [emailFailed, setEmailFailed] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -46,11 +48,12 @@ export function App() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [branchFilter, setBranchFilter] = useState('all');
+  const [requestedSourceFilter, setRequestedSourceFilter] = useState('all');
   /** Requester y orden se resuelven en el cliente: no viajan a useRequests. */
   const [requesterFilter, setRequesterFilter] = useState('all');
   const [sort, setSort] = useState<Sort>({ key: 'created', dir: 'desc' });
 
-  const list = useRequests(search, statusFilter, branchFilter);
+  const list = useRequests(search, statusFilter, branchFilter, requestedSourceFilter);
   const branches = useBranches();
   const detail = useRequest(view === 'detail' ? selectedId : null);
 
@@ -102,6 +105,23 @@ export function App() {
       window.alert(errorMessage(err));
     } finally {
       setStatusPending(false);
+    }
+  };
+
+  /**
+   * El checkbox de la lista: la request ya está en HCHB y alguien la cargó al
+   * chart del paciente. Pasa a Completed y con eso desaparece de la lista, así
+   * que no hay nada que refrescar del detalle.
+   */
+  const markLoadedToChart = async (id: number) => {
+    setLoadingId(id);
+    try {
+      await setRequestStatus(id, COMPLETED);
+      invalidate();
+    } catch (err) {
+      window.alert(errorMessage(err));
+    } finally {
+      setLoadingId(null);
     }
   };
 
@@ -169,6 +189,8 @@ export function App() {
       <AppBar
         crumb={crumb}
         name={user?.name ?? ''}
+        jobTitle={user?.jobTitle ?? ''}
+        department={user?.department ?? ''}
         initials={initialsOf(user?.name ?? '')}
         onSignOut={() => void signOut()}
       />
@@ -186,6 +208,8 @@ export function App() {
           onStatusFilterChange={setStatusFilter}
           branchFilter={branchFilter}
           onBranchFilterChange={setBranchFilter}
+          requestedSourceFilter={requestedSourceFilter}
+          onRequestedSourceFilterChange={setRequestedSourceFilter}
           requesterFilter={requesterFilter}
           onRequesterFilterChange={setRequesterFilter}
           sort={sort}
@@ -194,8 +218,12 @@ export function App() {
           onOpen={openDetail}
           onNew={startCreate}
           onExport={() => setExportOpen(true)}
+          onMarkLoaded={markLoadedToChart}
+          loadingId={loadingId}
           canCreate={can.canCreate}
           canExport={can.canExport}
+          canMarkLoaded={can.canMarkLoaded}
+          canSeeCompleted={can.canSeeCompleted}
         />
       )}
 

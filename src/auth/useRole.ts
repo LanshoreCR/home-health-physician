@@ -7,6 +7,8 @@ export interface Permissions {
   isUser: boolean;
   canCreate: boolean;
   canSetStatus: boolean;
+  canMarkLoaded: boolean;
+  canSeeCompleted: boolean;
   canExport: boolean;
   canDelete: boolean;
   canEdit: (request: PhysicianRequest) => boolean;
@@ -28,6 +30,9 @@ export function useRole(): Permissions {
     isUser,
     canCreate: isReviewer || isUser,
     canSetStatus: isReviewer,
+    /** Cargar al chart no es una decisión de revisión: la marca cualquiera con acceso. */
+    canMarkLoaded: isReviewer || isUser,
+    canSeeCompleted: isReviewer,
     canExport: isReviewer,
     canDelete: isReviewer,
     canEdit: (request) => isReviewer || (isUser && !FINAL_STATUSES.includes(request.status)),

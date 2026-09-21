@@ -10,4 +10,4 @@ export const APP_ROLES = {
  * Espejo de RequestStatuses.IsFinal del backend: una request ya revisada solo
  * la puede editar un Reviewer. Si allá cambia, hay que cambiarla acá también.
  */
-export const FINAL_STATUSES: RequestStatus[] = ['approved', 'denied'];
+export const FINAL_STATUSES: RequestStatus[] = ['approved', 'denied', 'completed'];

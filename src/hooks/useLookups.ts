@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { toOptions } from '../api/schemas';
 import { catalogFrom, labelFrom, useCatalogsStore, type CatalogName } from '../store/catalogs';
-import { EXPORTABLE_STATUSES } from '../data/types';
+import { COMPLETED, EXPORTABLE_STATUSES } from '../data/types';
 import type { RequestStatus } from '../data/types';
 
 /**
@@ -48,8 +48,23 @@ export function useStatusOptions(current?: RequestStatus) {
   }, [options, current]);
 }
 
-export function useStatusFilterOptions() {
+/**
+ * Completed sale del tablero de trabajo, así que solo un reviewer puede pedirlo:
+ * el API responde 403 si lo manda alguien más, y ofrecer la opción sería ofrecer
+ * un filtro que falla.
+ */
+export function useStatusFilterOptions(canSeeCompleted: boolean) {
   const options = useStatusOptions();
+  return useMemo(() => {
+    const visible = canSeeCompleted
+      ? options
+      : options.filter((option) => option.value !== COMPLETED);
+    return [{ value: 'all', label: 'All' }, ...visible];
+  }, [options, canSeeCompleted]);
+}
+
+export function useRequestedSourceFilterOptions() {
+  const options = useCatalogOptions('requestedSources');
   return useMemo(() => [{ value: 'all', label: 'All' }, ...options], [options]);
 }
 
