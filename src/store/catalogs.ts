@@ -9,16 +9,13 @@ import type { LookupItem, Lookups } from '../api/schemas';
 
 export type CatalogName = keyof Lookups;
 
-const TTL_MS = 24 * 60 * 60 * 1000;
-
 const cacheSchema = z.object({
   lookups: lookupsSchema.nullable(),
-  fetchedAt: z.number().nullable(),
 });
 
 type Cache = z.infer<typeof cacheSchema>;
 
-const EMPTY_CACHE: Cache = { lookups: null, fetchedAt: null };
+const EMPTY_CACHE: Cache = { lookups: null };
 
 /** Lo persistido se re-valida antes de aplicarse: un payload viejo no llega a renderizar. */
 function validCache(persisted: unknown): Cache {
@@ -31,9 +28,7 @@ interface CatalogsState extends Cache {
   error: string | null;
   /** No es un catálogo: sale de las requests vivas, así que no se persiste. */
   branches: string[];
-  /** Pide los catálogos solo si no hay caché fresca. */
-  loadLookups: () => Promise<void>;
-  /** Los pide siempre — el Retry del form y cualquier invalidación explícita. */
+  /** Los pide siempre: el bootstrap, el Retry del form y cualquier invalidación. */
   refreshLookups: () => Promise<void>;
   refreshBranches: () => Promise<void>;
 }
@@ -42,15 +37,17 @@ let lookupsInFlight: Promise<void> | null = null;
 let branchesInFlight: Promise<void> | null = null;
 
 /**
- * Catálogos del backend. Se persisten en localStorage con un TTL para que la
- * recarga pinte al instante y revalide de fondo.
+ * Catálogos del backend. Lo persistido en localStorage es solo para pintar al
+ * instante: cada arranque revalida contra el API, así que una fila nueva en un
+ * lookup (un status recién seeded, pongamos) aparece con un refresh y no hay
+ * que esperar a que venza nada ni limpiar el storage a mano.
  *
  * Solo códigos y labels: nada derivado de un PhysicianRequest (paciente, MRN,
  * email del requester) puede entrar acá — es storage sin cifrar.
  */
 export const useCatalogsStore = create<CatalogsState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       ...EMPTY_CACHE,
       error: null,
       branches: [],
@@ -68,7 +65,7 @@ export const useCatalogsStore = create<CatalogsState>()(
              */
             const parsed = lookupsSchema.safeParse(data);
             if (!parsed.success) throw new Error('The server returned catalogs in an unexpected format.');
-            set({ lookups: parsed.data, fetchedAt: Date.now() });
+            set({ lookups: parsed.data });
           })
           .catch((err: unknown) => {
             set({ error: errorMessage(err) });
@@ -79,12 +76,6 @@ export const useCatalogsStore = create<CatalogsState>()(
 
         lookupsInFlight = request;
         return request;
-      },
-
-      loadLookups: () => {
-        const { fetchedAt } = get();
-        if (fetchedAt && Date.now() - fetchedAt < TTL_MS) return Promise.resolve();
-        return get().refreshLookups();
       },
 
       /** Degrada a "All" si falla: el filtro de branch no vale bloquear la lista. */
@@ -108,9 +99,9 @@ export const useCatalogsStore = create<CatalogsState>()(
     }),
     {
       name: 'hhp-catalogs',
-      version: 1,
+      version: 2,
       storage: createJSONStorage(() => localStorage),
-      partialize: (state): Cache => ({ lookups: state.lookups, fetchedAt: state.fetchedAt }),
+      partialize: (state): Cache => ({ lookups: state.lookups }),
       migrate: () => EMPTY_CACHE,
       merge: (persisted, current) => ({ ...current, ...validCache(persisted) }),
     },
@@ -119,8 +110,8 @@ export const useCatalogsStore = create<CatalogsState>()(
 
 /** Se llama una vez en el bootstrap: a nivel de módulo StrictMode no lo duplica. */
 export function loadCatalogs() {
-  const { loadLookups, refreshBranches } = useCatalogsStore.getState();
-  void loadLookups();
+  const { refreshLookups, refreshBranches } = useCatalogsStore.getState();
+  void refreshLookups();
   void refreshBranches();
 }
 

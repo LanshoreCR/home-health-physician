@@ -114,7 +114,13 @@ async function request<T>(path: string, init: RequestInit = {}, body?: unknown):
 }
 
 export const api = {
-  get: <T>(path: string, signal?: AbortSignal) => request<T>(path, { method: 'GET', signal }),
+  /**
+   * no-store en todos los GET: acá no hay nada estático — catálogos, roles y
+   * requests son estado vivo, y el API no manda Cache-Control, así que sin esto
+   * queda a criterio heurístico del browser si sirve una copia vieja.
+   */
+  get: <T>(path: string, signal?: AbortSignal) =>
+    request<T>(path, { method: 'GET', cache: 'no-store', signal }),
   post: <T>(path: string, body?: unknown) => request<T>(path, { method: 'POST' }, body ?? {}),
   put: <T>(path: string, body: unknown) => request<T>(path, { method: 'PUT' }, body),
   patch: <T>(path: string, body: unknown) => request<T>(path, { method: 'PATCH' }, body),
