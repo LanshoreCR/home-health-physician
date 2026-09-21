@@ -114,6 +114,7 @@ export function RequestDetail({
               <KV label="Patient status" value={labelFor('patientStatuses', r.patientStatus)} />
               <KV label="Requester" value={r.requesterName} />
               <KV label="Requester email" value={r.requesterEmail} />
+              <KV label="Requested source" value={labelFor('requestedSources', r.requestedSource)} />
             </div>
           </Card>
           <Card eyebrow="Physician">

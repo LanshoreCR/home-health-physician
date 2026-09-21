@@ -20,7 +20,7 @@ import { saveRequestSchema, toOptions, validateDraft } from '../api/schemas';
 import type { RequestDraft } from '../data/types';
 
 const EMPTY: RequestDraft = {
-  patientName: '', mrn: '', patientStatus: '', requesterName: '', requesterEmail: '',
+  patientName: '', mrn: '', patientStatus: '', requesterName: '', requesterEmail: '', requestedSource: '',
   first: '', last: '', npi: '', degree: '', physicianType: '',
   vaTricare: false, pecosVerified: false,
   licenseNumber: '', licenseState: '', licenseExp: '', specialty: '', taxonomy: '', physicianGroup: '',
@@ -186,6 +186,9 @@ export function RequestForm({ mode, values, submitting, error, fieldErrors, onCa
               </FormField>
               <FormField name="requesterEmail" label="Requester email" required>
                 {(field, invalid) => <Input type="email" {...field} invalid={invalid} />}
+              </FormField>
+              <FormField name="requestedSource" label="Requested source" required hint="Intake · Branch · Other">
+                {(field, invalid) => <Select {...field} options={toOptions(lookups.requestedSources)} invalid={invalid} />}
               </FormField>
             </div>
           </Card>

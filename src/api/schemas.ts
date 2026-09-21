@@ -36,6 +36,8 @@ export const physicianRequestListItemSchema = z.object({
   mrn: z.string(),
   patientStatus: z.string(),
   requesterName: z.string(),
+  /** Vacío en las requests creadas antes de que existiera el campo. */
+  requestedSource: z.string(),
   status: requestStatusSchema,
   /** Crudo: la lista ordena por esta columna, y el formato es cosa de la pantalla. */
   created: z.string(),
@@ -54,6 +56,7 @@ export const physicianRequestSchema = z.object({
   patientStatus: z.string(),
   requesterName: z.string(),
   requesterEmail: z.string(),
+  requestedSource: z.string(),
   first: z.string(),
   last: z.string(),
   npi: z.string(),
@@ -97,6 +100,7 @@ export const lookupsSchema = z.object({
   orderNotifMethods: z.array(lookupItemSchema),
   states: z.array(lookupItemSchema),
   requestStatuses: z.array(lookupItemSchema),
+  requestedSources: z.array(lookupItemSchema),
 });
 
 export const currentUserSchema = z.object({
@@ -147,6 +151,7 @@ export const saveRequestSchema = z.object({
   patientStatus: required(20),
   requesterName: required(TEXT_MAX),
   requesterEmail: required(256).pipe(z.email('Enter a valid email address')),
+  requestedSource: required(20),
   first: required(TEXT_MAX),
   last: required(TEXT_MAX),
   npi: z.string().trim().regex(/^\d{10}$/, 'NPI must be 10 digits'),
