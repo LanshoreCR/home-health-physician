@@ -211,8 +211,13 @@ function FilterSelect({ label, value, options, onChange }: {
   /**
    * El tope de ancho no es estético: un <select> toma su ancho natural del
    * <option> más largo, y branch llega de la base con hasta 255 caracteres, así
-   * que sin esto un solo valor largo estira el control y desarma la fila. El
-   * select ya trae minWidth 0 y ellipsis para encogerse dentro del tope.
+   * que sin esto un solo valor largo estira el control y desarma la fila.
+   *
+   * Lo que el select NO puede llevar es width 0: sin ancho intrínseco los cuatro
+   * filtros colapsan al minWidth y truncan todos, incluso los que entraban de
+   * sobra. Se deja que cada uno se dimensione por su contenido y que el maxWidth
+   * recorte solo al que se pasa — overflow hidden porque text-overflow solo no
+   * recorta un select.
    */
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: '180px', maxWidth: '260px', height: 'var(--control-h)', padding: '0 12px', background: 'var(--surface-card)', border: '1px solid var(--border-field)', borderRadius: 'var(--radius-md)', fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-body)', color: 'var(--text-body)' }}>
@@ -221,7 +226,7 @@ function FilterSelect({ label, value, options, onChange }: {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         title={options.find((o) => o.value === value)?.label ?? value}
-        style={{ flex: 1, width: 0, height: '100%', border: 'none', background: 'transparent', appearance: 'none', WebkitAppearance: 'none', outline: 'none', fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-body)', color: 'var(--text-body)', cursor: 'pointer', padding: 0, minWidth: 0, textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden' }}
+        style={{ flex: 1, height: '100%', border: 'none', background: 'transparent', appearance: 'none', WebkitAppearance: 'none', outline: 'none', fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-body)', color: 'var(--text-body)', cursor: 'pointer', padding: 0, minWidth: 0, textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden' }}
       >
         {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>
