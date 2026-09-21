@@ -7,6 +7,7 @@ export interface Permissions {
   isUser: boolean;
   canCreate: boolean;
   canSetStatus: boolean;
+  canSeeCompleted: boolean;
   canExport: boolean;
   canDelete: boolean;
   canEdit: (request: PhysicianRequest) => boolean;
@@ -28,6 +29,7 @@ export function useRole(): Permissions {
     isUser,
     canCreate: isReviewer || isUser,
     canSetStatus: isReviewer,
+    canSeeCompleted: isReviewer,
     canExport: isReviewer,
     canDelete: isReviewer,
     canEdit: (request) => isReviewer || (isUser && !FINAL_STATUSES.includes(request.status)),
