@@ -19,6 +19,7 @@ export const requestStatusSchema = z.enum([
   'denied',
   'approved',
   'imported',
+  'completed',
 ]);
 
 // ---------------------------------------------------------------- lecturas

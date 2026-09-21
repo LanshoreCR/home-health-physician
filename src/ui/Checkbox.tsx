@@ -5,6 +5,8 @@ interface CheckboxProps {
   checked: boolean;
   onChange: (checked: boolean) => void;
   disabled?: boolean;
+  /** Para los checkbox sin label visible, como la columna de la lista. */
+  ariaLabel?: string;
 }
 
 const CheckIcon = (
@@ -16,12 +18,13 @@ const CheckIcon = (
  * (border, radius, focus ring, brand blue), backed by a real native input
  * for keyboard and accessibility. Rendered as a clickable label row.
  */
-export function Checkbox({ label, checked, onChange, disabled = false }: CheckboxProps) {
+export function Checkbox({ label, checked, onChange, disabled = false, ariaLabel }: CheckboxProps) {
   const [focus, setFocus] = useState(false);
   return (
     <label style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', gap: '10px', cursor: disabled ? 'not-allowed' : 'pointer', userSelect: 'none' }}>
       <input
         type="checkbox"
+        aria-label={ariaLabel}
         checked={checked}
         disabled={disabled}
         onChange={(e) => onChange(e.target.checked)}

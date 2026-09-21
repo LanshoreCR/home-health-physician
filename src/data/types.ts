@@ -13,6 +13,16 @@ import type { RequestStatus } from '../api/schemas';
  */
 export const EXPORTABLE_STATUSES: RequestStatus[] = ['approved'];
 
+/** Ya entró a HCHB: el único estado desde el que se puede marcar COMPLETED. */
+export const IMPORTED: RequestStatus = 'imported';
+
+/**
+ * El final del camino: la request ya quedó cargada en el chart del paciente.
+ * Solo se llega desde IMPORTED, y la lista la esconde salvo que un reviewer
+ * filtre por ella.
+ */
+export const COMPLETED: RequestStatus = 'completed';
+
 /** States that fire a response back to the requester. */
 export const TRIGGER_STATUSES: RequestStatus[] = ['denied', 'approved'];
 

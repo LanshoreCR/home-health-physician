@@ -1,11 +1,13 @@
 import { useState, type CSSProperties } from 'react';
 import { Button } from '../ui/Button';
+import { Checkbox } from '../ui/Checkbox';
 import { Skeleton } from '../ui/Skeleton';
 import { StatusBadge } from '../ui/StatusBadge';
 import { formatCreated } from '../api/dates';
 import { useLabelFor, useRequestedSourceFilterOptions, useStatusFilterOptions } from '../hooks/useLookups';
 import { ALL, nextSort, useRequesterOptions, useVisibleRequests } from '../hooks/useListView';
 import type { Sort, SortDir, SortKey } from '../hooks/useListView';
+import { COMPLETED, IMPORTED } from '../data/types';
 import type { PhysicianRequestListItem, StatusFilter } from '../data/types';
 
 const DownloadIcon = (
@@ -18,7 +20,9 @@ const SearchIcon = (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--slate-400)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
 );
 
-const COLS = 'minmax(0,1.5fr) minmax(0,1fr) minmax(0,0.85fr) minmax(0,0.5fr) minmax(0,1.15fr) minmax(0,0.7fr) minmax(0,1.25fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.5fr) minmax(0,1.5fr) minmax(0,0.85fr)';
+const COLS = 'minmax(0,1.5fr) minmax(0,1fr) minmax(0,0.85fr) minmax(0,0.5fr) minmax(0,1.15fr) minmax(0,0.7fr) minmax(0,1.25fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.5fr) minmax(0,1.5fr) minmax(0,0.85fr) minmax(0,1.1fr)';
+
+const LOADED_LABEL = 'Loaded to Patients Chart';
 
 const COLUMNS: { key: SortKey; label: string }[] = [
   { key: 'physician', label: 'Physician' },
@@ -59,8 +63,13 @@ interface RequestsListProps {
   onOpen: (id: number) => void;
   onNew: () => void;
   onExport: () => void;
+  onMarkLoaded: (id: number) => void;
+  /** La fila cuyo checkbox está en vuelo, para no mandar el PATCH dos veces. */
+  loadingId: number | null;
   canCreate: boolean;
   canExport: boolean;
+  canMarkLoaded: boolean;
+  canSeeCompleted: boolean;
 }
 
 /**
@@ -77,11 +86,11 @@ export function RequestsList({
   requesterFilter, onRequesterFilterChange,
   sort, onSortChange,
   branches,
-  onOpen, onNew, onExport,
-  canCreate, canExport,
+  onOpen, onNew, onExport, onMarkLoaded, loadingId,
+  canCreate, canExport, canMarkLoaded, canSeeCompleted,
 }: RequestsListProps) {
   const branchOptions = [{ value: ALL, label: 'All' }, ...branches.map((b) => ({ value: b, label: b }))];
-  const statusOptions = useStatusFilterOptions();
+  const statusOptions = useStatusFilterOptions(canSeeCompleted);
   const requestedSourceOptions = useRequestedSourceFilterOptions();
   const requesterOptions = useRequesterOptions(requests, requesterFilter);
   const visible = useVisibleRequests(requests, requesterFilter, sort);
@@ -128,7 +137,7 @@ export function RequestsList({
         </div>
 
         <div style={{ overflowX: 'auto' }}>
-          <div style={{ background: 'var(--surface-card)', border: '1px solid var(--border-card)', borderRadius: 'var(--radius-xl)', overflow: 'hidden', minWidth: '1440px' }}>
+          <div style={{ background: 'var(--surface-card)', border: '1px solid var(--border-card)', borderRadius: 'var(--radius-xl)', overflow: 'hidden', minWidth: '1600px' }}>
             <div style={{ display: 'grid', gridTemplateColumns: COLS, gap: '16px', padding: '14px 24px', background: 'var(--surface-subtle)', borderBottom: '1px solid var(--border-card)', fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 600, letterSpacing: 'var(--ls-eyebrow)', textTransform: 'uppercase', color: 'var(--text-faint)' }}>
               {COLUMNS.map((column) => (
                 <SortHeader
@@ -138,6 +147,7 @@ export function RequestsList({
                   onClick={() => onSortChange(nextSort(sort, column.key))}
                 />
               ))}
+              <span style={CELL}>{LOADED_LABEL}</span>
             </div>
             {loading && <TableSkeleton />}
             {!loading && error && <TableNotice text={error} tone="error" />}
@@ -145,7 +155,15 @@ export function RequestsList({
               <TableNotice text="No requests match your filters." />
             )}
             {!loading && !error && visible.map((r, i) => (
-              <Row key={r.id} r={r} last={i === visible.length - 1} onOpen={onOpen} />
+              <Row
+                key={r.id}
+                r={r}
+                last={i === visible.length - 1}
+                onOpen={onOpen}
+                onMarkLoaded={onMarkLoaded}
+                busy={loadingId === r.id}
+                canMarkLoaded={canMarkLoaded}
+              />
             ))}
           </div>
         </div>
@@ -207,7 +225,7 @@ function FilterSelect({ label, value, options, onChange }: {
 
 const SKELETON_ROWS = 8;
 /** Un ancho por columna de COLUMNS, para que las filas fantasma no queden todas iguales. */
-const SKELETON_WIDTHS = ['64%', '52%', '46%', '34%', '58%', '30%', '70%', '48%', '56%', '62%', '78%', '50%'];
+const SKELETON_WIDTHS = ['64%', '52%', '46%', '34%', '58%', '30%', '70%', '48%', '56%', '62%', '78%', '50%', '18px'];
 const STATUS_COL = 10;
 
 function TableSkeleton() {
@@ -235,7 +253,14 @@ function TableNotice({ text, tone }: { text: string; tone?: 'error' }) {
   );
 }
 
-function Row({ r, last, onOpen }: { r: PhysicianRequestListItem; last: boolean; onOpen: (id: number) => void }) {
+function Row({ r, last, onOpen, onMarkLoaded, busy, canMarkLoaded }: {
+  r: PhysicianRequestListItem;
+  last: boolean;
+  onOpen: (id: number) => void;
+  onMarkLoaded: (id: number) => void;
+  busy: boolean;
+  canMarkLoaded: boolean;
+}) {
   const [hover, setHover] = useState(false);
   const labelFor = useLabelFor();
   return (
@@ -264,6 +289,33 @@ function Row({ r, last, onOpen }: { r: PhysicianRequestListItem; last: boolean; 
       </span>
       <StatusBadge status={r.status} label={labelFor('requestStatuses', r.status)} style={{ minWidth: 0, whiteSpace: 'normal' }} />
       <span style={{ ...CELL, color: 'var(--text-muted)' }}>{formatCreated(r.created)}</span>
+      <LoadedCell r={r} busy={busy} canMarkLoaded={canMarkLoaded} onMarkLoaded={onMarkLoaded} />
     </div>
+  );
+}
+
+/**
+ * Un solo sentido: se marca cuando la request ya está en HCHB y con eso pasa a
+ * Completed, que la saca de la lista. Desmarcar no existe — por eso el checkbox
+ * de una fila completed queda deshabilitado en vez de volver a ser editable.
+ */
+function LoadedCell({ r, busy, canMarkLoaded, onMarkLoaded }: {
+  r: PhysicianRequestListItem;
+  busy: boolean;
+  canMarkLoaded: boolean;
+  onMarkLoaded: (id: number) => void;
+}) {
+  const checked = r.status === COMPLETED;
+  const disabled = busy || !canMarkLoaded || r.status !== IMPORTED;
+  return (
+    <span style={{ ...CELL, display: 'flex' }} onClick={(e) => e.stopPropagation()}>
+      <Checkbox
+        label=""
+        ariaLabel={`${LOADED_LABEL} — ${r.first} ${r.last}`}
+        checked={checked}
+        disabled={disabled}
+        onChange={() => onMarkLoaded(r.id)}
+      />
+    </span>
   );
 }
