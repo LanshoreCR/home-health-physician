@@ -3,7 +3,7 @@ import { Button } from '../ui/Button';
 import { Skeleton } from '../ui/Skeleton';
 import { StatusBadge } from '../ui/StatusBadge';
 import { formatCreated } from '../api/dates';
-import { useLabelFor, useStatusFilterOptions } from '../hooks/useLookups';
+import { useLabelFor, useRequestedSourceFilterOptions, useStatusFilterOptions } from '../hooks/useLookups';
 import { ALL, nextSort, useRequesterOptions, useVisibleRequests } from '../hooks/useListView';
 import type { Sort, SortDir, SortKey } from '../hooks/useListView';
 import type { PhysicianRequestListItem, StatusFilter } from '../data/types';
@@ -49,6 +49,8 @@ interface RequestsListProps {
   onStatusFilterChange: (value: StatusFilter) => void;
   branchFilter: string;
   onBranchFilterChange: (value: string) => void;
+  requestedSourceFilter: string;
+  onRequestedSourceFilterChange: (value: string) => void;
   requesterFilter: string;
   onRequesterFilterChange: (value: string) => void;
   sort: Sort;
@@ -71,6 +73,7 @@ export function RequestsList({
   search, onSearchChange,
   statusFilter, onStatusFilterChange,
   branchFilter, onBranchFilterChange,
+  requestedSourceFilter, onRequestedSourceFilterChange,
   requesterFilter, onRequesterFilterChange,
   sort, onSortChange,
   branches,
@@ -79,6 +82,7 @@ export function RequestsList({
 }: RequestsListProps) {
   const branchOptions = [{ value: ALL, label: 'All' }, ...branches.map((b) => ({ value: b, label: b }))];
   const statusOptions = useStatusFilterOptions();
+  const requestedSourceOptions = useRequestedSourceFilterOptions();
   const requesterOptions = useRequesterOptions(requests, requesterFilter);
   const visible = useVisibleRequests(requests, requesterFilter, sort);
 
@@ -113,13 +117,14 @@ export function RequestsList({
             <input
               value={search}
               onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Search name or NPI…"
+              placeholder="Search physician, patient, requester, MRN or NPI…"
               style={{ width: '100%', height: 'var(--control-h)', padding: '0 12px 0 36px', background: 'var(--surface-card)', border: '1px solid var(--border-field)', borderRadius: 'var(--radius-md)', fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-body)', color: 'var(--text-body)', outline: 'none', boxSizing: 'border-box' }}
             />
           </div>
           <FilterSelect label="Status" value={statusFilter} options={statusOptions} onChange={(v) => onStatusFilterChange(v as StatusFilter)} />
           <FilterSelect label="Branch" value={branchFilter} options={branchOptions} onChange={onBranchFilterChange} />
           <FilterSelect label="Requester" value={requesterFilter} options={requesterOptions} onChange={onRequesterFilterChange} />
+          <FilterSelect label="Requested source" value={requestedSourceFilter} options={requestedSourceOptions} onChange={onRequestedSourceFilterChange} />
         </div>
 
         <div style={{ overflowX: 'auto' }}>
@@ -249,7 +254,14 @@ function Row({ r, last, onOpen }: { r: PhysicianRequestListItem; last: boolean; 
       <span style={CELL}>{r.patientName}</span>
       <span style={{ ...CELL, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-mono)', color: 'var(--text-label)' }}>{r.mrn}</span>
       <span style={CELL}>{labelFor('patientStatuses', r.patientStatus)}</span>
-      <span style={CELL}>{r.requesterName}</span>
+      <span style={CELL}>
+        {r.requesterName}
+        {r.requestedSource && (
+          <span style={{ display: 'block', fontSize: 'var(--fs-label)', color: 'var(--text-faint)' }}>
+            {labelFor('requestedSources', r.requestedSource)}
+          </span>
+        )}
+      </span>
       <StatusBadge status={r.status} label={labelFor('requestStatuses', r.status)} style={{ minWidth: 0, whiteSpace: 'normal' }} />
       <span style={{ ...CELL, color: 'var(--text-muted)' }}>{formatCreated(r.created)}</span>
     </div>

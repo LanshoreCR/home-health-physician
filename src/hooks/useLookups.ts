@@ -53,6 +53,11 @@ export function useStatusFilterOptions() {
   return useMemo(() => [{ value: 'all', label: 'All' }, ...options], [options]);
 }
 
+export function useRequestedSourceFilterOptions() {
+  const options = useCatalogOptions('requestedSources');
+  return useMemo(() => [{ value: 'all', label: 'All' }, ...options], [options]);
+}
+
 /** "A, B, and C" — coma de Oxford, como estaba escrito el copy a mano. */
 function joinList(items: string[], conjunction: string): string {
   if (items.length < 2) return items.join('');

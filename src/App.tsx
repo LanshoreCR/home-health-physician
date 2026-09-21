@@ -46,11 +46,12 @@ export function App() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [branchFilter, setBranchFilter] = useState('all');
+  const [requestedSourceFilter, setRequestedSourceFilter] = useState('all');
   /** Requester y orden se resuelven en el cliente: no viajan a useRequests. */
   const [requesterFilter, setRequesterFilter] = useState('all');
   const [sort, setSort] = useState<Sort>({ key: 'created', dir: 'desc' });
 
-  const list = useRequests(search, statusFilter, branchFilter);
+  const list = useRequests(search, statusFilter, branchFilter, requestedSourceFilter);
   const branches = useBranches();
   const detail = useRequest(view === 'detail' ? selectedId : null);
 
@@ -188,6 +189,8 @@ export function App() {
           onStatusFilterChange={setStatusFilter}
           branchFilter={branchFilter}
           onBranchFilterChange={setBranchFilter}
+          requestedSourceFilter={requestedSourceFilter}
+          onRequestedSourceFilterChange={setRequestedSourceFilter}
           requesterFilter={requesterFilter}
           onRequesterFilterChange={setRequesterFilter}
           sort={sort}
