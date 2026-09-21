@@ -222,7 +222,7 @@ export function App() {
           loadingId={loadingId}
           canCreate={can.canCreate}
           canExport={can.canExport}
-          canSetStatus={can.canSetStatus}
+          canMarkLoaded={can.canMarkLoaded}
           canSeeCompleted={can.canSeeCompleted}
         />
       )}

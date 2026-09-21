@@ -68,7 +68,7 @@ interface RequestsListProps {
   loadingId: number | null;
   canCreate: boolean;
   canExport: boolean;
-  canSetStatus: boolean;
+  canMarkLoaded: boolean;
   canSeeCompleted: boolean;
 }
 
@@ -87,7 +87,7 @@ export function RequestsList({
   sort, onSortChange,
   branches,
   onOpen, onNew, onExport, onMarkLoaded, loadingId,
-  canCreate, canExport, canSetStatus, canSeeCompleted,
+  canCreate, canExport, canMarkLoaded, canSeeCompleted,
 }: RequestsListProps) {
   const branchOptions = [{ value: ALL, label: 'All' }, ...branches.map((b) => ({ value: b, label: b }))];
   const statusOptions = useStatusFilterOptions(canSeeCompleted);
@@ -162,7 +162,7 @@ export function RequestsList({
                 onOpen={onOpen}
                 onMarkLoaded={onMarkLoaded}
                 busy={loadingId === r.id}
-                canSetStatus={canSetStatus}
+                canMarkLoaded={canMarkLoaded}
               />
             ))}
           </div>
@@ -253,13 +253,13 @@ function TableNotice({ text, tone }: { text: string; tone?: 'error' }) {
   );
 }
 
-function Row({ r, last, onOpen, onMarkLoaded, busy, canSetStatus }: {
+function Row({ r, last, onOpen, onMarkLoaded, busy, canMarkLoaded }: {
   r: PhysicianRequestListItem;
   last: boolean;
   onOpen: (id: number) => void;
   onMarkLoaded: (id: number) => void;
   busy: boolean;
-  canSetStatus: boolean;
+  canMarkLoaded: boolean;
 }) {
   const [hover, setHover] = useState(false);
   const labelFor = useLabelFor();
@@ -289,7 +289,7 @@ function Row({ r, last, onOpen, onMarkLoaded, busy, canSetStatus }: {
       </span>
       <StatusBadge status={r.status} label={labelFor('requestStatuses', r.status)} style={{ minWidth: 0, whiteSpace: 'normal' }} />
       <span style={{ ...CELL, color: 'var(--text-muted)' }}>{formatCreated(r.created)}</span>
-      <LoadedCell r={r} busy={busy} canSetStatus={canSetStatus} onMarkLoaded={onMarkLoaded} />
+      <LoadedCell r={r} busy={busy} canMarkLoaded={canMarkLoaded} onMarkLoaded={onMarkLoaded} />
     </div>
   );
 }
@@ -299,14 +299,14 @@ function Row({ r, last, onOpen, onMarkLoaded, busy, canSetStatus }: {
  * Completed, que la saca de la lista. Desmarcar no existe — por eso el checkbox
  * de una fila completed queda deshabilitado en vez de volver a ser editable.
  */
-function LoadedCell({ r, busy, canSetStatus, onMarkLoaded }: {
+function LoadedCell({ r, busy, canMarkLoaded, onMarkLoaded }: {
   r: PhysicianRequestListItem;
   busy: boolean;
-  canSetStatus: boolean;
+  canMarkLoaded: boolean;
   onMarkLoaded: (id: number) => void;
 }) {
   const checked = r.status === COMPLETED;
-  const disabled = busy || !canSetStatus || r.status !== IMPORTED;
+  const disabled = busy || !canMarkLoaded || r.status !== IMPORTED;
   return (
     <span style={{ ...CELL, display: 'flex' }} onClick={(e) => e.stopPropagation()}>
       <Checkbox
