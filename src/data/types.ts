@@ -14,10 +14,11 @@ import type { RequestStatus } from '../api/schemas';
 export const EXPORTABLE_STATUSES: RequestStatus[] = ['approved'];
 
 /**
- * Desde donde se puede marcar COMPLETED: ya entró a HCHB, o se cerró sin
- * llegar (denegada o duplicada). Espejo de RequestStatuses.Closable en la API.
+ * Desde donde se puede marcar COMPLETED: aprobada (sin esperar el export), ya
+ * entró a HCHB, o se cerró sin llegar (denegada o duplicada). Espejo de
+ * RequestStatuses.IsClosable en la API.
  */
-export const CLOSABLE_STATUSES: RequestStatus[] = ['denied', 'duplicate', 'imported'];
+export const CLOSABLE_STATUSES: RequestStatus[] = ['approved', 'denied', 'duplicate', 'imported'];
 
 /**
  * El final del camino: la request ya quedó cargada en el chart del paciente o

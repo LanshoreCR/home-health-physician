@@ -14,8 +14,6 @@ export const requestStatusSchema = z.enum([
   'newreq',
   'duplicate',
   'modify',
-  'manual',
-  'special',
   'denied',
   'approved',
   'imported',
