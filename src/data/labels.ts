@@ -13,7 +13,7 @@ const SUB: Record<string, string> = {
   denied: 'Denied · requester notified',
   approved: 'Approved · ready to export',
   imported: 'In HCHB · out of the export batch',
-  completed: 'Loaded to the patient chart · done',
+  completed: 'Loaded to chart or closed · done',
 };
 
 export function statusSub(status: string): string {
