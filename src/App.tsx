@@ -109,8 +109,8 @@ export function App() {
   };
 
   /**
-   * El checkbox de la lista: la request ya está en HCHB y alguien la cargó al
-   * chart del paciente. Pasa a Completed y con eso desaparece de la lista, así
+   * El checkbox de la lista: la request se cargó al chart del paciente o se
+   * cerró. Pasa a Completed y con eso desaparece de la lista, así
    * que no hay nada que refrescar del detalle.
    */
   const markLoadedToChart = async (id: number) => {
