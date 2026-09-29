@@ -283,6 +283,7 @@ function Step({ color, ring, title, sub, mutedTitle, line = true }: {
 
 function Timeline({ request, exportable }: { request: PhysicianRequest; exportable: boolean }) {
   const labelFor = useLabelFor();
+  const exportableLabels = useExportableLabels();
   const colors = statusColors(request.status);
   const exported = request.exportedAt !== null;
   return (
@@ -293,15 +294,15 @@ function Timeline({ request, exportable }: { request: PhysicianRequest; exportab
         color={exported || exportable ? 'var(--status-newreq-dot)' : '#fff'}
         mutedTitle={!exported && !exportable}
         title="Exported to HCHB"
-        sub={exportSub(exported, exportable)}
+        sub={exportSub(exported, exportable, exportableLabels('or'))}
         line={false}
       />
     </div>
   );
 }
 
-function exportSub(exported: boolean, exportable: boolean): string {
+function exportSub(exported: boolean, exportable: boolean, exportableLabel: string): string {
   if (exported) return 'Already sent to HCHB';
   if (exportable) return 'In the next export batch';
-  return 'Once New Request / Modify Physician / Request Approved';
+  return `Once ${exportableLabel}`;
 }

@@ -8,8 +8,6 @@ const SUB: Record<string, string> = {
   newreq: 'Clean · ready to export',
   duplicate: 'Possible duplicate · needs resolution',
   modify: 'Clean · ready to export',
-  manual: 'Held for a processor',
-  special: 'Escalated · awaiting sign-off',
   denied: 'Denied · requester notified',
   approved: 'Approved · ready to export',
   imported: 'In HCHB · out of the export batch',

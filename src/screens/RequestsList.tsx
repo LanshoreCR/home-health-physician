@@ -311,7 +311,7 @@ function Row({ r, last, onOpen, onMarkLoaded, busy, canMarkLoaded }: {
 /** El checkbox deshabilitado no dice por qué lo está; el tooltip sí. */
 function loadedHint(status: PhysicianRequestListItem['status'], canMarkLoaded: boolean): string {
   if (status === COMPLETED) return 'Already loaded to the chart or closed';
-  if (!CLOSABLE_STATUSES.includes(status)) return 'Available once the request is denied, duplicated or imported to HCHB';
+  if (!CLOSABLE_STATUSES.includes(status)) return 'Available once the request is approved, denied, duplicated or imported to HCHB';
   if (!canMarkLoaded) return 'You do not have access to change this';
   return 'Mark as loaded to the chart or closed';
 }
