@@ -3,6 +3,7 @@ import type { RequestStatus } from '../data/types';
 export const APP_ROLES = {
   USER: 'User',
   REVIEWER: 'Reviewer',
+  VIEWER: 'Viewer',
   NO_ACCESS: 'No Access',
 } as const;
 

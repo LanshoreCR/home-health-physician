@@ -26,5 +26,6 @@ export function initialsOf(name: string): string {
 
 export function hasAccess(user: CurrentUser | null): boolean {
   if (!user) return false;
-  return user.roles.some((role) => role === APP_ROLES.USER || role === APP_ROLES.REVIEWER);
+  const granting: string[] = [APP_ROLES.USER, APP_ROLES.REVIEWER, APP_ROLES.VIEWER];
+  return user.roles.some((role) => granting.includes(role));
 }
