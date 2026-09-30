@@ -1,13 +1,5 @@
-import { useEffect, useState, type ChangeEvent, type ReactNode } from 'react';
-import {
-  Controller,
-  FormProvider,
-  useFormContext,
-  useForm,
-  type ControllerRenderProps,
-  type FieldPath,
-} from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { useState, type ChangeEvent, type ReactNode } from 'react';
+import { Controller, FormProvider, type ControllerRenderProps } from 'react-hook-form';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { Field } from '../ui/Field';
@@ -16,29 +8,12 @@ import { Select } from '../ui/Select';
 import { Checkbox } from '../ui/Checkbox';
 import { Skeleton } from '../ui/Skeleton';
 import { useLookups } from '../hooks/useLookups';
-import { saveRequestSchema, toOptions, validateDraft } from '../api/schemas';
+import { toOptions } from '../api/schemas';
 import type { RequestDraft } from '../data/types';
+import { FormField, FormFooter, TextArea } from './RequestFields';
+import { EMPTY_DRAFT, formatPhone, onlyAlphanumeric, useRequestForm, type DraftKey } from './requestDraft';
 
-const EMPTY: RequestDraft = {
-  patientName: '', mrn: '', patientStatus: '', requesterName: '', requesterEmail: '', requestedSource: '',
-  first: '', last: '', npi: '', degree: '', physicianType: '',
-  vaTricare: false, pecosVerified: false,
-  licenseNumber: '', licenseState: '', licenseExp: '', specialty: '', taxonomy: '', physicianGroup: '',
-  vitalAlerts: '', orderNotif: '',
-  branch: '', address: '', city: '', state: '', zip: '', phone: '', fax: '',
-  officeVital: '', officeOrder: '', officePhysicianGroup: '', admissionCoordinator: '', additionalDetails: '',
-};
-
-type DraftKey = FieldPath<RequestDraft>;
 type OfficeKey = 'officeVital' | 'officeOrder' | 'officePhysicianGroup';
-
-function formatPhone(raw: string): string {
-  const d = raw.replace(/[^0-9]/g, '').slice(0, 10);
-  const a = d.slice(0, 3), b = d.slice(3, 6), c = d.slice(6, 10);
-  if (d.length > 6) return a + '-' + b + '-' + c;
-  if (d.length > 3) return a + '-' + b;
-  return a;
-}
 
 function SectionDivider({ label }: { label: string }) {
   return (
@@ -49,46 +24,7 @@ function SectionDivider({ label }: { label: string }) {
   );
 }
 
-function ErrorHint({ text }: { text: string }) {
-  return <span style={{ color: 'var(--text-required)' }}>{text}</span>;
-}
-
-interface FormFieldProps<K extends DraftKey> {
-  name: K;
-  label: string;
-  required?: boolean;
-  hint?: ReactNode;
-  style?: React.CSSProperties;
-  children: (field: ControllerRenderProps<RequestDraft, K>, invalid: boolean) => ReactNode;
-}
-
-/**
- * Puente entre el Controller de react-hook-form y el Field del design system:
- * el mensaje del error sustituye al hint mientras exista, igual que antes.
- */
-function FormField<K extends DraftKey>({ name, label, required, hint, style, children }: FormFieldProps<K>) {
-  const { control } = useFormContext<RequestDraft>();
-  return (
-    <Controller
-      name={name}
-      control={control}
-      render={({ field, fieldState }) => (
-        <Field
-          label={label}
-          required={required}
-          style={style}
-          hint={fieldState.error?.message ? <ErrorHint text={fieldState.error.message} /> : hint}
-        >
-          {children(field, Boolean(fieldState.error))}
-        </Field>
-      )}
-    />
-  );
-}
-
 interface RequestFormProps {
-  mode: 'create' | 'edit';
-  values?: Partial<RequestDraft>;
   submitting: boolean;
   error: string | null;
   /** Errores por campo devueltos por el 400 del backend, ya camelCaseados. */
@@ -98,37 +34,17 @@ interface RequestFormProps {
 }
 
 /**
- * RequestForm — create / edit a physician request. Three sectioned cards
+ * RequestForm — create a physician request (editing is inline on RequestDetail). Three sectioned cards
  * (Patient & requester, Physician, Office) and a sticky save/submit footer.
  * Office fields auto-populate from their physician-side source until edited.
  * La validación es el mismo saveRequestSchema que se usa antes de mandar el
  * body, así que el cliente y el 400 del servidor hablan el mismo idioma.
  */
-export function RequestForm({ mode, values, submitting, error, fieldErrors, onCancel, onSubmit }: RequestFormProps) {
+export function RequestForm({ submitting, error, fieldErrors, onCancel, onSubmit }: RequestFormProps) {
   const { lookups, error: lookupsError, retry } = useLookups();
-  const [touched, setTouched] = useState<Set<string>>(
-    () => new Set(mode === 'edit' ? ['officeVital', 'officeOrder', 'officePhysicianGroup'] : []),
-  );
-
-  /**
-   * raw: true devuelve el estado del form, no la salida del schema — los
-   * .transform(emptyToNull) se aplican en toSaveBody, ya en la capa de API.
-   */
-  const form = useForm<RequestDraft>({
-    defaultValues: { ...EMPTY, ...values },
-    resolver: zodResolver(saveRequestSchema, undefined, { raw: true }),
-    mode: 'onSubmit',
-    reValidateMode: 'onChange',
-  });
-  const { control, handleSubmit, setValue, setError, watch } = form;
-
-  useEffect(() => {
-    Object.entries(fieldErrors).forEach(([key, messages]) => {
-      if (messages[0]) setError(key as DraftKey, { type: 'server', message: messages[0] });
-    });
-  }, [fieldErrors, setError]);
-
-  const pendingCount = Object.keys(validateDraft(watch()).fieldErrors).length;
+  const [touched, setTouched] = useState<Set<string>>(() => new Set());
+  const form = useRequestForm(EMPTY_DRAFT, fieldErrors);
+  const { control, handleSubmit, setValue } = form;
 
   const markTouched = (key: OfficeKey) => setTouched((t) => new Set(t).add(key));
 
@@ -149,7 +65,7 @@ export function RequestForm({ mode, values, submitting, error, fieldErrors, onCa
     (e: ChangeEvent<HTMLInputElement>) => field.onChange(formatPhone(e.target.value));
 
   const alphanumericChange = <K extends DraftKey>(field: ControllerRenderProps<RequestDraft, K>) =>
-    (e: ChangeEvent<HTMLInputElement>) => field.onChange(e.target.value.replace(/[^A-Za-z0-9]/g, ''));
+    (e: ChangeEvent<HTMLInputElement>) => field.onChange(onlyAlphanumeric(e.target.value));
 
   /** Un refresh de fondo que falla no debe blanquear un form que ya tiene catálogos. */
   if (lookupsError && !lookups) {
@@ -167,7 +83,7 @@ export function RequestForm({ mode, values, submitting, error, fieldErrors, onCa
     <FormProvider {...form}>
       <div style={{ background: 'var(--surface-page)', position: 'relative', maxWidth: 'var(--page-max)', margin: '0 auto' }}>
         <div style={{ padding: '28px var(--page-gutter) 0' }}>
-          <h1 style={{ margin: '0 0 4px', fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 'var(--fs-form-title)', color: 'var(--text-heading)', letterSpacing: 'var(--ls-tight)' }}>{mode === 'edit' ? 'Edit physician request' : 'New physician request'}</h1>
+          <h1 style={{ margin: '0 0 4px', fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 'var(--fs-form-title)', color: 'var(--text-heading)', letterSpacing: 'var(--ls-tight)' }}>New physician request</h1>
           <p style={{ margin: '0 0 26px', fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-body)', color: 'var(--text-muted)' }}>Complete all required fields. The whole template must be filled before you can submit.</p>
 
           <Card step={1} title="Patient & requester" style={{ marginBottom: 'var(--section-gap)' }}>
@@ -300,37 +216,19 @@ export function RequestForm({ mode, values, submitting, error, fieldErrors, onCa
                 {(field, invalid) => <Input {...field} onChange={officeChange(field, 'officePhysicianGroup')} invalid={invalid} />}
               </FormField>
               <FormField name="additionalDetails" label="Additional details" style={{ gridColumn: '1 / -1' }}>
-                {(field) => (
-                  <textarea
-                    {...field}
-                    rows={3}
-                    style={{
-                      width: '100%', boxSizing: 'border-box', padding: '10px 12px',
-                      background: 'var(--surface-card)',
-                      border: 'var(--border-width) solid var(--border-field)',
-                      borderRadius: 'var(--radius-md)',
-                      fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-body)',
-                      color: 'var(--text-heading)', outline: 'none',
-                      resize: 'vertical', overflowY: 'auto',
-                    }}
-                  />
-                )}
+                {(field) => <TextArea {...field} />}
               </FormField>
             </div>
           </Card>
         </div>
 
-        <div style={{ position: 'sticky', bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px var(--page-gutter)', background: 'rgba(255,255,255,.92)', backdropFilter: 'blur(6px)', borderTop: '1px solid var(--border-card)' }}>
-          <span style={{ fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-small)', color: error ? 'var(--danger-600)' : 'var(--text-muted)' }}>
-            {error ?? (pendingCount === 0 ? 'All required fields complete' : `${pendingCount} field${pendingCount > 1 ? 's' : ''} to complete`)}
-          </span>
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <Button variant="ghost" onClick={onCancel} disabled={submitting}>Cancel</Button>
-            <Button variant="primary" onClick={handleSubmit(onSubmit)} disabled={submitting}>
-              {submitting ? 'Saving…' : mode === 'edit' ? 'Save changes' : 'Submit request'}
-            </Button>
-          </div>
-        </div>
+        <FormFooter
+          submitLabel="Submit request"
+          submitting={submitting}
+          error={error}
+          onCancel={onCancel}
+          onSubmit={handleSubmit(onSubmit)}
+        />
       </div>
     </FormProvider>
   );
