@@ -1,4 +1,5 @@
-import { type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
+import { FormProvider } from 'react-hook-form';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { Select } from '../ui/Select';
@@ -9,7 +10,11 @@ import { EXPORTABLE_STATUSES } from '../data/types';
 // import { TRIGGER_STATUSES } from '../data/types';
 import { statusColors, statusSub } from '../data/labels';
 import { useExportableLabels, useLabelFor, useLookups, useStatusOptions } from '../hooks/useLookups';
-import type { PhysicianRequest, RequestStatus } from '../data/types';
+import { toDraft } from '../api/schemas';
+import type { PhysicianRequest, RequestDraft, RequestStatus } from '../data/types';
+import { DetailField } from './DetailField';
+import { FormFooter } from './RequestFields';
+import { useRequestForm } from './requestDraft';
 
 const EditIcon = (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z" /></svg>
@@ -25,15 +30,6 @@ const InfoIcon = (
 //   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--danger-600)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: '1px' }}><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
 // );
 
-function KV({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
-  return (
-    <div>
-      <div style={{ fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-label)', color: 'var(--text-faint)', marginBottom: '4px' }}>{label}</div>
-      <div style={{ fontFamily: mono ? 'var(--font-mono)' : 'var(--font-sans)', fontSize: mono ? 'var(--fs-body)' : 'var(--fs-value-lg)', fontWeight: mono ? 400 : 500, color: 'var(--text-heading)' }}>{value || '—'}</div>
-    </div>
-  );
-}
-
 function Banner({ icon, children, tone }: { icon: ReactNode; children: ReactNode; tone?: 'warn' }) {
   return (
     <div style={{ background: tone === 'warn' ? 'var(--danger-50)' : 'var(--surface-subtle)', border: `1px solid ${tone === 'warn' ? 'var(--danger-border)' : 'var(--border-card)'}`, borderRadius: 'var(--radius-xl)', padding: '20px', display: 'flex', gap: '10px' }}>
@@ -45,25 +41,44 @@ function Banner({ icon, children, tone }: { icon: ReactNode; children: ReactNode
   );
 }
 
+/** La edición vive en el detalle: App solo guarda y reporta el resultado. */
+export interface DetailEditSession {
+  active: boolean;
+  saving: boolean;
+  error: string | null;
+  /** Errores por campo devueltos por el 400 del backend, ya camelCaseados. */
+  fieldErrors: Record<string, string[]>;
+  onStart: () => void;
+  onCancel: () => void;
+  onSave: (values: RequestDraft, status: RequestStatus) => void;
+}
+
 interface RequestDetailProps {
   request: PhysicianRequest;
   statusPending: boolean;
   // emailFailed: boolean;
   onSetStatus: (status: RequestStatus) => void;
-  onEdit: () => void;
   onDelete: () => void;
   canEdit: boolean;
   canDelete: boolean;
   canSetStatus: boolean;
+  edit: DetailEditSession;
+}
+
+function statusCaption(editing: boolean, statusPending: boolean): string {
+  if (editing) return 'Status';
+  if (statusPending) return 'Saving status…';
+  return 'Set status';
 }
 
 /**
- * RequestDetail — review view. Prominent status, grouped read-only data,
- * a status timeline, and the reviewer's Edit + status disposition controls.
+ * RequestDetail — review view. Prominent status, grouped data, a status
+ * timeline, and the Edit + status disposition controls. Edit turns the same
+ * cards into the form; a reviewer's status change rides along on Save.
  */
 export function RequestDetail({
-  request, statusPending, onSetStatus, onEdit, onDelete,
-  canEdit, canDelete, canSetStatus,
+  request, statusPending, onSetStatus, onDelete,
+  canEdit, canDelete, canSetStatus, edit,
 }: RequestDetailProps) {
   const r = request;
   const { lookups } = useLookups();
@@ -72,117 +87,145 @@ export function RequestDetail({
   const exportableLabels = useExportableLabels();
   const exportable = EXPORTABLE_STATUSES.includes(r.status);
   // const notifies = TRIGGER_STATUSES.includes(r.status);
+  const form = useRequestForm(toDraft(r), edit.fieldErrors);
+  const { reset, handleSubmit } = form;
+  const [draftStatus, setDraftStatus] = useState<RequestStatus>(r.status);
+  const editing = edit.active;
+
+  useEffect(() => {
+    if (editing) return;
+    reset(toDraft(r));
+    setDraftStatus(r.status);
+  }, [editing, r, reset]);
+
+  const pickStatus = (status: RequestStatus) => {
+    if (editing) return setDraftStatus(status);
+    onSetStatus(status);
+  };
+
   return (
-    <div style={{ background: 'var(--surface-page)', maxWidth: 'var(--page-max)', margin: '0 auto' }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '28px var(--page-gutter) 24px', background: 'var(--surface-card)', borderBottom: '1px solid var(--border-card)' }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '8px' }}>
-            <h1 style={{ margin: 0, fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 'var(--fs-page-title)', color: 'var(--text-heading)', letterSpacing: 'var(--ls-tight)' }}>{r.first} {r.last}, {labelFor('degrees', r.degree)}</h1>
-            <StatusBadge status={r.status} size="md" label={labelFor('requestStatuses', r.status)} />
+    <FormProvider {...form}>
+      <div style={{ background: 'var(--surface-page)', maxWidth: 'var(--page-max)', margin: '0 auto' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '28px var(--page-gutter) 24px', background: 'var(--surface-card)', borderBottom: '1px solid var(--border-card)' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '8px' }}>
+              <h1 style={{ margin: 0, fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: 'var(--fs-page-title)', color: 'var(--text-heading)', letterSpacing: 'var(--ls-tight)' }}>{r.first} {r.last}, {labelFor('degrees', r.degree)}</h1>
+              <StatusBadge status={r.status} size="md" label={labelFor('requestStatuses', r.status)} />
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', columnGap: '18px', rowGap: '4px', fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-body)', color: 'var(--text-muted)' }}>
+              <span>NPI <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-body)' }}>{r.npi}</span></span>
+              <span style={{ color: 'var(--slate-300)' }}>·</span>
+              <span style={{ minWidth: 0, overflowWrap: 'anywhere' }}>Branch <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-body)' }}>{r.branch}</span></span>
+              <span style={{ color: 'var(--slate-300)' }}>·</span>
+              <span>Created {formatCreated(r.created)}</span>
+            </div>
           </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', columnGap: '18px', rowGap: '4px', fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-body)', color: 'var(--text-muted)' }}>
-            <span>NPI <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-body)' }}>{r.npi}</span></span>
-            <span style={{ color: 'var(--slate-300)' }}>·</span>
-            <span style={{ minWidth: 0, overflowWrap: 'anywhere' }}>Branch <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-body)' }}>{r.branch}</span></span>
-            <span style={{ color: 'var(--slate-300)' }}>·</span>
-            <span>Created {formatCreated(r.created)}</span>
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: '10px' }}>
+            {!editing && canDelete && <Button variant="danger" size="lg" icon={TrashIcon} onClick={onDelete}>Delete</Button>}
+            {!editing && canEdit && <Button variant="secondary" size="lg" icon={EditIcon} onClick={edit.onStart} disabled={!lookups}>Edit</Button>}
+            {canSetStatus && <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '-1px' }}>
+              <span style={{ fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-label)', color: 'var(--text-faint)', lineHeight: 1.2 }}>{statusCaption(editing, statusPending)}</span>
+              <Select
+                value={editing ? draftStatus : r.status}
+                options={statusOptions}
+                placeholder=""
+                disabled={statusPending || edit.saving || !lookups}
+                onChange={(e) => pickStatus(e.target.value as RequestStatus)}
+                style={{ minWidth: '220px' }}
+              />
+            </div>}
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'flex-end', gap: '10px' }}>
-          {canDelete && <Button variant="danger" size="lg" icon={TrashIcon} onClick={onDelete}>Delete</Button>}
-          {canEdit && <Button variant="secondary" size="lg" icon={EditIcon} onClick={onEdit}>Edit</Button>}
-          {canSetStatus && <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '-1px' }}>
-            <span style={{ fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-label)', color: 'var(--text-faint)', lineHeight: 1.2 }}>{statusPending ? 'Saving status…' : 'Set status'}</span>
-            <Select
-              value={r.status}
-              options={statusOptions}
-              placeholder=""
-              disabled={statusPending || !lookups}
-              onChange={(e) => onSetStatus(e.target.value as RequestStatus)}
-              style={{ minWidth: '220px' }}
-            />
-          </div>}
-        </div>
-      </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '24px', padding: '28px var(--page-gutter) 36px' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-          <Card eyebrow="Patient & requester">
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
-              <KV label="Patient name" value={r.patientName} />
-              <KV label="MRN" value={r.mrn} mono />
-              <KV label="Patient status" value={labelFor('patientStatuses', r.patientStatus)} />
-              <KV label="Requester" value={r.requesterName} />
-              <KV label="Requester email" value={r.requesterEmail} />
-              <KV label="Requested source" value={labelFor('requestedSources', r.requestedSource)} />
-            </div>
-          </Card>
-          <Card eyebrow="Physician">
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
-              <KV label="First name" value={r.first} />
-              <KV label="Last name" value={r.last} />
-              <KV label="Degree" value={labelFor('degrees', r.degree)} />
-              <KV label="Branch code" value={r.branch} mono />
-              <KV label="NPI number" value={r.npi} mono />
-              <KV label="Physician type" value={labelFor('physicianTypes', r.physicianType)} />
-              <KV label="VA/Tricare" value={r.vaTricare ? 'Yes' : 'No'} />
-              <KV label="Pecos verified" value={r.pecosVerified ? 'Yes' : 'No'} />
-              <KV label="License number" value={r.licenseNumber} />
-              <KV label="License state" value={labelFor('states', r.licenseState)} />
-              <KV label="License expiration" value={r.licenseExp} />
-              <KV label="Specialty" value={r.specialty} />
-              <KV label="Taxonomy" value={r.taxonomy} />
-              <KV label="Physician group" value={r.physicianGroup} />
-            </div>
-          </Card>
-          <Card eyebrow="Notifications">
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-              <KV label="Preferred vital sign alerts" value={labelFor('vitalAlertMethods', r.vitalAlerts)} />
-              <KV label="New order notification" value={labelFor('orderNotifMethods', r.orderNotif)} />
-            </div>
-          </Card>
-          <Card eyebrow="Physician's office">
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
-              <div style={{ gridColumn: '1 / -1' }}><KV label="Address" value={r.address} /></div>
-              <KV label="City" value={r.city} />
-              <KV label="State" value={labelFor('states', r.state)} />
-              <KV label="Zip code" value={r.zip} mono />
-              <KV label="Phone" value={r.phone} mono />
-              <KV label="Fax" value={r.fax} mono />
-              <KV label="Vital sign alerts to office" value={labelFor('vitalAlertMethods', r.officeVital)} />
-              <KV label="New order notification to office" value={labelFor('orderNotifMethods', r.officeOrder)} />
-              <KV label="Admission coordinator" value={r.admissionCoordinator} />
-              <KV label="Physician group" value={r.officePhysicianGroup} />
-              <div style={{ gridColumn: '1 / -1' }}><KV label="Additional details" value={r.additionalDetails} /></div>
-            </div>
-          </Card>
-        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '24px', padding: '28px var(--page-gutter) 36px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+            <Card eyebrow="Patient & requester">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
+                <DetailField editing={editing} name="patientName" label="Patient name" required />
+                <DetailField editing={editing} name="mrn" label="MRN" kind="alphanumeric" required />
+                <DetailField editing={editing} name="patientStatus" label="Patient status" kind="catalog" catalog="patientStatuses" required />
+                <DetailField editing={editing} name="requesterName" label="Requester" required />
+                <DetailField editing={editing} name="requesterEmail" label="Requester email" kind="email" required />
+                <DetailField editing={editing} name="requestedSource" label="Requested source" kind="catalog" catalog="requestedSources" required />
+              </div>
+            </Card>
+            <Card eyebrow="Physician">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
+                <DetailField editing={editing} name="first" label="First name" required />
+                <DetailField editing={editing} name="last" label="Last name" required />
+                <DetailField editing={editing} name="degree" label="Degree" kind="catalog" catalog="degrees" required />
+                <DetailField editing={editing} name="branch" label="Branch code" kind="mono" required />
+                <DetailField editing={editing} name="npi" label="NPI number" kind="mono" required />
+                <DetailField editing={editing} name="physicianType" label="Physician type" kind="catalog" catalog="physicianTypes" required />
+                <DetailField editing={editing} name="vaTricare" label="VA/Tricare" kind="yesNo" />
+                <DetailField editing={editing} name="pecosVerified" label="Pecos verified" kind="yesNo" />
+                <DetailField editing={editing} name="licenseNumber" label="License number" />
+                <DetailField editing={editing} name="licenseState" label="License state" kind="catalog" catalog="states" />
+                <DetailField editing={editing} name="licenseExp" label="License expiration" kind="date" />
+                <DetailField editing={editing} name="specialty" label="Specialty" />
+                <DetailField editing={editing} name="taxonomy" label="Taxonomy" />
+                <DetailField editing={editing} name="physicianGroup" label="Physician group" />
+              </div>
+            </Card>
+            <Card eyebrow="Notifications">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                <DetailField editing={editing} name="vitalAlerts" label="Preferred vital sign alerts" kind="catalog" catalog="vitalAlertMethods" required />
+                <DetailField editing={editing} name="orderNotif" label="New order notification" kind="catalog" catalog="orderNotifMethods" required />
+              </div>
+            </Card>
+            <Card eyebrow="Physician's office">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
+                <DetailField editing={editing} name="address" label="Address" wide required />
+                <DetailField editing={editing} name="city" label="City" required />
+                <DetailField editing={editing} name="state" label="State" kind="catalog" catalog="states" required />
+                <DetailField editing={editing} name="zip" label="Zip code" kind="mono" required />
+                <DetailField editing={editing} name="phone" label="Phone" kind="phone" required />
+                <DetailField editing={editing} name="fax" label="Fax" kind="phone" required />
+                <DetailField editing={editing} name="officeVital" label="Vital sign alerts to office" kind="catalog" catalog="vitalAlertMethods" />
+                <DetailField editing={editing} name="officeOrder" label="New order notification to office" kind="catalog" catalog="orderNotifMethods" />
+                <DetailField editing={editing} name="admissionCoordinator" label="Admission coordinator" />
+                <DetailField editing={editing} name="officePhysicianGroup" label="Physician group" />
+                <DetailField editing={editing} name="additionalDetails" label="Additional details" kind="longText" wide />
+              </div>
+            </Card>
+          </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-          <Card eyebrow="Status">
-            <Timeline request={r} exportable={exportable} />
-          </Card>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+            <Card eyebrow="Status">
+              <Timeline request={r} exportable={exportable} />
+            </Card>
 
-          {/* Email deshabilitado hasta que existan las credenciales de Microsoft Graph.
-          {emailFailed && (
-            <Banner icon={WarnIcon} tone="warn">
-              {`The status was saved, but the notification email to ${r.requesterEmail} could not be sent. Follow up manually.`}
-            </Banner>
-          )}
-          {notifies && !emailFailed && (
+            {/* Email deshabilitado hasta que existan las credenciales de Microsoft Graph.
+            {emailFailed && (
+              <Banner icon={WarnIcon} tone="warn">
+                {`The status was saved, but the notification email to ${r.requesterEmail} could not be sent. Follow up manually.`}
+              </Banner>
+            )}
+            {notifies && !emailFailed && (
+              <Banner icon={InfoIcon}>
+                {`A response regarding this request will be sent to ${r.requesterEmail}`}
+              </Banner>
+            )} */}
+
             <Banner icon={InfoIcon}>
-              {`A response regarding this request will be sent to ${r.requesterEmail}`}
+              {exportable
+                ? `${exportableLabels('and')} records are clean and included in the next export batch to HCHB.`
+                : `This request is held for review. Route it to ${exportableLabels('or')} once resolved to include it in the export batch to HCHB.`}
             </Banner>
-          )} */}
-
-          <Banner icon={InfoIcon}>
-            {exportable
-              ? `${exportableLabels('and')} records are clean and included in the next export batch to HCHB.`
-              : `This request is held for review. Route it to ${exportableLabels('or')} once resolved to include it in the export batch to HCHB.`}
-          </Banner>
+          </div>
         </div>
+
+        {editing && (
+          <FormFooter
+            submitLabel="Save changes"
+            submitting={edit.saving}
+            error={edit.error}
+            onCancel={edit.onCancel}
+            onSubmit={handleSubmit((values) => edit.onSave(values, draftStatus))}
+          />
+        )}
       </div>
-    </div>
+    </FormProvider>
   );
 }
 

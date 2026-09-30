@@ -17,10 +17,9 @@ import {
 } from './api/physicianRequests';
 import { exportBatch, type ExportRange } from './api/export';
 import { ApiError, errorMessage } from './api/client';
-import { toDraft } from './api/schemas';
 // import { TRIGGER_STATUSES } from './data/types';
 import { COMPLETED } from './data/types';
-import type { PhysicianRequest, RequestDraft, RequestStatus, StatusFilter } from './data/types';
+import type { RequestDraft, RequestStatus, StatusFilter } from './data/types';
 import type { Sort } from './hooks/useListView';
 import { useRole } from './auth/useRole';
 import { signOut } from './auth/okta';
@@ -33,7 +32,7 @@ export function App() {
   const can = useRole();
   const [view, setView] = useState<View>('list');
   const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [editing, setEditing] = useState<PhysicianRequest | null>(null);
+  const [editing, setEditing] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -68,27 +67,56 @@ export function App() {
     setFormFieldErrors({});
   };
 
+  const showFormError = (err: unknown) => {
+    setFormError(errorMessage(err));
+    if (err instanceof ApiError && err.fieldErrors) setFormFieldErrors(err.fieldErrors);
+  };
+
   const openDetail = (id: number) => {
     setSelectedId(id);
+    setEditing(false);
     // setEmailFailed(false);
     setView('detail');
   };
 
   const goList = () => {
     clearFormErrors();
+    setEditing(false);
     setView('list');
   };
 
   const startCreate = () => {
-    setEditing(null);
     clearFormErrors();
     setView('form');
   };
 
   const startEdit = () => {
-    setEditing(detail.request);
     clearFormErrors();
-    setView('form');
+    setEditing(true);
+  };
+
+  const cancelEdit = () => {
+    clearFormErrors();
+    setEditing(false);
+  };
+
+  /** Primero los campos y después el status: si el PATCH falla, lo guardado ya quedó. */
+  const saveEdit = async (values: RequestDraft, status: RequestStatus) => {
+    if (!detail.request) return;
+    const { id, status: currentStatus } = detail.request;
+    setSubmitting(true);
+    clearFormErrors();
+    try {
+      await updateRequest(id, values);
+      if (status !== currentStatus) await setRequestStatus(id, status);
+      setEditing(false);
+      detail.refetch();
+      invalidate();
+    } catch (err) {
+      showFormError(err);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const changeStatus = async (status: RequestStatus) => {
@@ -145,14 +173,11 @@ export function App() {
     setSubmitting(true);
     clearFormErrors();
     try {
-      if (editing) await updateRequest(editing.id, values);
-      if (!editing) await createRequest(values);
-      setEditing(null);
+      await createRequest(values);
       setView('list');
       invalidate();
     } catch (err) {
-      setFormError(errorMessage(err));
-      if (err instanceof ApiError && err.fieldErrors) setFormFieldErrors(err.fieldErrors);
+      showFormError(err);
     } finally {
       setSubmitting(false);
     }
@@ -180,7 +205,7 @@ export function App() {
   }
   if (view === 'form') {
     crumb = (
-      <><span className="lnk" onClick={goList}>Requests</span><span>/</span><span className="cur">{editing ? `${editing.first} ${editing.last}` : 'New request'}</span></>
+      <><span className="lnk" onClick={goList}>Requests</span><span>/</span><span className="cur">New request</span></>
     );
   }
 
@@ -234,11 +259,19 @@ export function App() {
               request={detail.request}
               statusPending={statusPending}
               onSetStatus={changeStatus}
-              onEdit={startEdit}
               onDelete={() => setConfirmingDelete(true)}
               canEdit={can.canEdit(detail.request)}
               canDelete={can.canDelete}
               canSetStatus={can.canSetStatus}
+              edit={{
+                active: editing,
+                saving: submitting,
+                error: formError,
+                fieldErrors: formFieldErrors,
+                onStart: startEdit,
+                onCancel: cancelEdit,
+                onSave: saveEdit,
+              }}
             />
           )}
         </Loader>
@@ -246,8 +279,6 @@ export function App() {
 
       {view === 'form' && (
         <RequestForm
-          mode={editing ? 'edit' : 'create'}
-          values={editing ? toDraft(editing) : undefined}
           submitting={submitting}
           error={formError}
           fieldErrors={formFieldErrors}
