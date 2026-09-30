@@ -7,7 +7,7 @@ import { formatCreated } from '../api/dates';
 import { useLabelFor, useRequestedSourceFilterOptions, useStatusFilterOptions } from '../hooks/useLookups';
 import { ALL, nextSort, useRequesterOptions, useVisibleRequests } from '../hooks/useListView';
 import type { Sort, SortDir, SortKey } from '../hooks/useListView';
-import { COMPLETED, IMPORTED } from '../data/types';
+import { CLOSABLE_STATUSES, COMPLETED } from '../data/types';
 import type { PhysicianRequestListItem, StatusFilter } from '../data/types';
 
 const DownloadIcon = (
@@ -20,9 +20,11 @@ const SearchIcon = (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--slate-400)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
 );
 
-const COLS = 'minmax(0,1.1fr) minmax(0,1.5fr) minmax(0,1fr) minmax(0,0.85fr) minmax(0,0.5fr) minmax(0,1.15fr) minmax(0,0.7fr) minmax(0,1.25fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.5fr) minmax(0,1.5fr) minmax(0,0.85fr)';
+const COLS = '88px minmax(0,1.5fr) minmax(0,1fr) minmax(0,0.85fr) minmax(0,0.5fr) minmax(0,1.15fr) minmax(0,0.7fr) minmax(0,1.25fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.5fr) minmax(0,1.5fr) minmax(0,0.85fr)';
 
-const LOADED_LABEL = 'Loaded to Patients Chart';
+const LOADED_LABEL = 'Loaded to Chart/Closed';
+// Break after the slash, not mid-word, so the narrow column reads in three lines.
+const LOADED_HEADER = LOADED_LABEL.replace('/', '/\u200B');
 
 const COLUMNS: { key: SortKey; label: string }[] = [
   { key: 'physician', label: 'Physician' },
@@ -139,7 +141,7 @@ export function RequestsList({
         <div style={{ overflowX: 'auto' }}>
           <div style={{ background: 'var(--surface-card)', border: '1px solid var(--border-card)', borderRadius: 'var(--radius-xl)', overflow: 'hidden', minWidth: '1600px' }}>
             <div style={{ display: 'grid', gridTemplateColumns: COLS, gap: '16px', padding: '14px 24px', background: 'var(--surface-subtle)', borderBottom: '1px solid var(--border-card)', fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 600, letterSpacing: 'var(--ls-eyebrow)', textTransform: 'uppercase', color: 'var(--text-faint)' }}>
-              <span style={CELL}>{LOADED_LABEL}</span>
+              <span style={{ ...CELL, overflowWrap: 'normal' }}>{LOADED_HEADER}</span>
               {COLUMNS.map((column) => (
                 <SortHeader
                   key={column.key}
@@ -308,14 +310,14 @@ function Row({ r, last, onOpen, onMarkLoaded, busy, canMarkLoaded }: {
 
 /** El checkbox deshabilitado no dice por qué lo está; el tooltip sí. */
 function loadedHint(status: PhysicianRequestListItem['status'], canMarkLoaded: boolean): string {
-  if (status === COMPLETED) return 'Already loaded to the patient chart';
-  if (status !== IMPORTED) return 'Available once the request is imported to HCHB';
+  if (status === COMPLETED) return 'Already loaded to the chart or closed';
+  if (!CLOSABLE_STATUSES.includes(status)) return 'Available once the request is approved, denied, duplicated or imported to HCHB';
   if (!canMarkLoaded) return 'You do not have access to change this';
-  return 'Mark as loaded to the patient chart';
+  return 'Mark as loaded to the chart or closed';
 }
 
 /**
- * Un solo sentido: se marca cuando la request ya está en HCHB y con eso pasa a
+ * Un solo sentido: se marca desde CLOSABLE_STATUSES y con eso pasa a
  * Completed, que la saca de la lista. Desmarcar no existe — por eso el checkbox
  * de una fila completed queda deshabilitado en vez de volver a ser editable.
  */
@@ -326,7 +328,7 @@ function LoadedCell({ r, busy, canMarkLoaded, onMarkLoaded }: {
   onMarkLoaded: (id: number) => void;
 }) {
   const checked = r.status === COMPLETED;
-  const disabled = busy || !canMarkLoaded || r.status !== IMPORTED;
+  const disabled = busy || !canMarkLoaded || !CLOSABLE_STATUSES.includes(r.status);
   return (
     <span
       style={{ ...CELL, display: 'flex' }}
