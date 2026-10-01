@@ -7,7 +7,7 @@ import { formatCreated } from '../api/dates';
 import { useLabelFor, useRequestedSourceFilterOptions, useStatusFilterOptions } from '../hooks/useLookups';
 import { ALL, nextSort, useRequesterOptions, useVisibleRequests } from '../hooks/useListView';
 import type { Sort, SortDir, SortKey } from '../hooks/useListView';
-import { COMPLETED, IMPORTED } from '../data/types';
+import { CLOSABLE_STATUSES, COMPLETED } from '../data/types';
 import type { PhysicianRequestListItem, StatusFilter } from '../data/types';
 
 const DownloadIcon = (
@@ -20,9 +20,31 @@ const SearchIcon = (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--slate-400)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
 );
 
-const COLS = 'minmax(0,1.1fr) minmax(0,1.5fr) minmax(0,1fr) minmax(0,0.85fr) minmax(0,0.5fr) minmax(0,1.15fr) minmax(0,0.7fr) minmax(0,1.25fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.5fr) minmax(0,1.5fr) minmax(0,0.85fr)';
+/**
+ * Las columnas fijas son las de contenido acotado. Loaded y Patient Status van
+ * fijas además para que su header quede en tres y dos líneas: con fr crecerían
+ * en pantallas anchas y volverían a ocupar una línea larga.
+ */
+const COLS = [
+  '68px',
+  'minmax(96px,1.2fr)',
+  '80px',
+  'minmax(84px,1fr)',
+  '52px',
+  'minmax(76px,0.9fr)',
+  '56px',
+  'minmax(90px,1fr)',
+  'minmax(72px,0.8fr)',
+  '84px',
+  'minmax(96px,1.1fr)',
+  'minmax(112px,1.5fr)',
+  '88px',
+].join(' ');
+const COL_GAP = '12px';
 
-const LOADED_LABEL = 'Loaded to Patients Chart';
+const LOADED_LABEL = 'Loaded to Chart/Closed';
+
+const breakAfterSlash = (text: string) => text.replace('/', '/\u200B');
 
 const COLUMNS: { key: SortKey; label: string }[] = [
   { key: 'physician', label: 'Physician' },
@@ -40,6 +62,7 @@ const COLUMNS: { key: SortKey; label: string }[] = [
 ];
 
 const CELL: CSSProperties = { minWidth: 0, overflowWrap: 'anywhere' };
+const HEADER_CELL: CSSProperties = { ...CELL, overflowWrap: 'normal' };
 
 interface RequestsListProps {
   requests: PhysicianRequestListItem[];
@@ -137,9 +160,9 @@ export function RequestsList({
         </div>
 
         <div style={{ overflowX: 'auto' }}>
-          <div style={{ background: 'var(--surface-card)', border: '1px solid var(--border-card)', borderRadius: 'var(--radius-xl)', overflow: 'hidden', minWidth: '1600px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: COLS, gap: '16px', padding: '14px 24px', background: 'var(--surface-subtle)', borderBottom: '1px solid var(--border-card)', fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 600, letterSpacing: 'var(--ls-eyebrow)', textTransform: 'uppercase', color: 'var(--text-faint)' }}>
-              <span style={CELL}>{LOADED_LABEL}</span>
+          <div style={{ background: 'var(--surface-card)', border: '1px solid var(--border-card)', borderRadius: 'var(--radius-xl)', overflow: 'hidden', minWidth: 'min-content' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: COLS, gap: COL_GAP, padding: '14px 24px', background: 'var(--surface-subtle)', borderBottom: '1px solid var(--border-card)', fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 600, letterSpacing: 'var(--ls-eyebrow)', textTransform: 'uppercase', color: 'var(--text-faint)' }}>
+              <span style={HEADER_CELL}>{breakAfterSlash(LOADED_LABEL)}</span>
               {COLUMNS.map((column) => (
                 <SortHeader
                   key={column.key}
@@ -182,9 +205,9 @@ function SortHeader({ label, active, onClick }: {
     <span
       onClick={onClick}
       aria-sort={active === null ? 'none' : active === 'asc' ? 'ascending' : 'descending'}
-      style={{ ...CELL, display: 'inline-flex', alignItems: 'center', gap: '4px', cursor: 'pointer', userSelect: 'none', color: active === null ? 'inherit' : 'var(--text-label)' }}
+      style={{ ...HEADER_CELL, display: 'inline-flex', alignItems: 'center', gap: '4px', cursor: 'pointer', userSelect: 'none', color: active === null ? 'inherit' : 'var(--text-label)' }}
     >
-      {label}
+      {breakAfterSlash(label)}
       {active !== null && <SortCaret dir={active} />}
     </span>
   );
@@ -246,7 +269,7 @@ function TableSkeleton() {
       {Array.from({ length: SKELETON_ROWS }, (_, row) => (
         <div
           key={row}
-          style={{ display: 'grid', gridTemplateColumns: COLS, gap: '16px', padding: '18px 24px', alignItems: 'center', borderBottom: row === SKELETON_ROWS - 1 ? 'none' : '1px solid var(--border-divider)' }}
+          style={{ display: 'grid', gridTemplateColumns: COLS, gap: COL_GAP, padding: '18px 24px', alignItems: 'center', borderBottom: row === SKELETON_ROWS - 1 ? 'none' : '1px solid var(--border-divider)' }}
         >
           {SKELETON_WIDTHS.map((w, col) => (
             col === STATUS_COL
@@ -280,14 +303,14 @@ function Row({ r, last, onOpen, onMarkLoaded, busy, canMarkLoaded }: {
       onClick={() => onOpen(r.id)}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
-      style={{ display: 'grid', gridTemplateColumns: COLS, gap: '16px', padding: '18px 24px', alignItems: 'center', borderBottom: last ? 'none' : '1px solid var(--border-divider)', background: hover ? '#f8fbff' : 'transparent', fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-body)', color: 'var(--text-body)', cursor: 'pointer' }}
+      style={{ display: 'grid', gridTemplateColumns: COLS, gap: COL_GAP, padding: '18px 24px', alignItems: 'center', borderBottom: last ? 'none' : '1px solid var(--border-divider)', background: hover ? '#f8fbff' : 'transparent', fontFamily: 'var(--font-sans)', fontSize: 'var(--fs-body)', color: 'var(--text-body)', cursor: 'pointer' }}
     >
       <LoadedCell r={r} busy={busy} canMarkLoaded={canMarkLoaded} onMarkLoaded={onMarkLoaded} />
       <span style={{ ...CELL, fontWeight: 600 }}>{r.first} {r.last}</span>
       <span style={{ ...CELL, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-mono)', color: 'var(--text-label)' }}>{r.npi}</span>
       <span style={{ ...CELL, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-mono)', color: 'var(--text-label)' }}>{r.branch}</span>
       <span style={{ ...CELL, color: 'var(--text-label)' }}>{labelFor('degrees', r.degree)}</span>
-      <span style={CELL}>{labelFor('physicianTypes', r.physicianType) || '—'}</span>
+      <span style={CELL}>{breakAfterSlash(labelFor('physicianTypes', r.physicianType)) || '—'}</span>
       <span style={CELL}>{r.vaTricare ? 'Yes' : '—'}</span>
       <span style={CELL}>{r.patientName}</span>
       <span style={{ ...CELL, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-mono)', color: 'var(--text-label)' }}>{r.mrn}</span>
@@ -308,14 +331,14 @@ function Row({ r, last, onOpen, onMarkLoaded, busy, canMarkLoaded }: {
 
 /** El checkbox deshabilitado no dice por qué lo está; el tooltip sí. */
 function loadedHint(status: PhysicianRequestListItem['status'], canMarkLoaded: boolean): string {
-  if (status === COMPLETED) return 'Already loaded to the patient chart';
-  if (status !== IMPORTED) return 'Available once the request is imported to HCHB';
+  if (status === COMPLETED) return 'Already loaded to the chart or closed';
+  if (!CLOSABLE_STATUSES.includes(status)) return 'Available once the request is approved, denied, duplicated or imported to HCHB';
   if (!canMarkLoaded) return 'You do not have access to change this';
-  return 'Mark as loaded to the patient chart';
+  return 'Mark as loaded to the chart or closed';
 }
 
 /**
- * Un solo sentido: se marca cuando la request ya está en HCHB y con eso pasa a
+ * Un solo sentido: se marca desde CLOSABLE_STATUSES y con eso pasa a
  * Completed, que la saca de la lista. Desmarcar no existe — por eso el checkbox
  * de una fila completed queda deshabilitado en vez de volver a ser editable.
  */
@@ -326,7 +349,7 @@ function LoadedCell({ r, busy, canMarkLoaded, onMarkLoaded }: {
   onMarkLoaded: (id: number) => void;
 }) {
   const checked = r.status === COMPLETED;
-  const disabled = busy || !canMarkLoaded || r.status !== IMPORTED;
+  const disabled = busy || !canMarkLoaded || !CLOSABLE_STATUSES.includes(r.status);
   return (
     <span
       style={{ ...CELL, display: 'flex' }}

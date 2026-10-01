@@ -33,12 +33,10 @@
   --border-divider:   #f1f5f9;  /* table row divider   */
 
   /* ── Status spectrum (PAT process flow) ──
-     newreq / modify / approved are clean, export-ready; the rest are held. */
+     approved is clean, export-ready; the rest are held. */
   --status-newreq-bg:    #dcfce7;  --status-newreq-fg:    #15803d;  --status-newreq-dot:    #22a25a;
   --status-duplicate-bg: #ede9fe;  --status-duplicate-fg: #6d28d9;  --status-duplicate-dot: #8b5cf6;
   --status-modify-bg:    #e0edff;  --status-modify-fg:    #1f4e8f;  --status-modify-dot:    #3b82f6;
-  --status-manual-bg:    #fef3c7;  --status-manual-fg:    #92600a;  --status-manual-dot:    #d99617;
-  --status-special-bg:   #e0e7ff;  --status-special-fg:   #4338ca;  --status-special-dot:   #6366f1;
   --status-denied-bg:    #fee2e2;  --status-denied-fg:    #b91c1c;  --status-denied-dot:    #dc4040;
   --status-approved-bg:  #ccfbf1;  --status-approved-fg:  #0f766e;  --status-approved-dot:  #14b8a6;
   --status-imported-bg:  #e2e8f0;  --status-imported-fg:  #475569;  --status-imported-dot:  #64748b;
