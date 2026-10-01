@@ -100,6 +100,8 @@ export const lookupsSchema = z.object({
   states: z.array(lookupItemSchema),
   requestStatuses: z.array(lookupItemSchema),
   requestedSources: z.array(lookupItemSchema),
+  /** Con default: si el front sale antes que el API, el form sigue cargando y solo el dropdown queda vacío. */
+  specialties: z.array(lookupItemSchema).default([]),
 });
 
 export const currentUserSchema = z.object({
@@ -233,9 +235,13 @@ export function toSaveBody(draft: RequestDraft): SaveRequestBody {
   return saveRequestSchema.parse(draft);
 }
 
+/** Opción del catálogo de HCHB, no un vacío: es lo que el export manda cuando no hay specialty. */
+export const NO_SPECIALTY = '*NONE SELECTED';
+
+/** Las requests sin specialty abren con NO_SPECIALTY, igual que una nueva. */
 export function toDraft(request: PhysicianRequest): RequestDraft {
   const { id: _id, status: _s, created: _c, submitter: _sub, exportedAt: _e, ...draft } = request;
-  return draft;
+  return { ...draft, specialty: draft.specialty || NO_SPECIALTY };
 }
 
 export function toOptions(items: LookupItem[]): { value: string; label: string }[] {

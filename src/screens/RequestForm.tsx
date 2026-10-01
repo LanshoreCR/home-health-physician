@@ -164,7 +164,7 @@ export function RequestForm({ submitting, error, fieldErrors, onCancel, onSubmit
                 {(field, invalid) => <Input type="date" {...field} invalid={invalid} />}
               </FormField>
               <FormField name="specialty" label="Specialty">
-                {(field, invalid) => <Input {...field} invalid={invalid} />}
+                {(field, invalid) => <Select {...field} options={toOptions(lookups.specialties)} invalid={invalid} />}
               </FormField>
               <FormField name="taxonomy" label="Taxonomy" hint="Defaults to *NONE on import if blank">
                 {(field, invalid) => <Input {...field} invalid={invalid} />}

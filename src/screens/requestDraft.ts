@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useForm, type FieldPath } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { saveRequestSchema } from '../api/schemas';
+import { NO_SPECIALTY, saveRequestSchema } from '../api/schemas';
 import type { RequestDraft } from '../data/types';
 
 export type DraftKey = FieldPath<RequestDraft>;
@@ -10,7 +10,7 @@ export const EMPTY_DRAFT: RequestDraft = {
   patientName: '', mrn: '', patientStatus: '', requesterName: '', requesterEmail: '', requestedSource: '',
   first: '', last: '', npi: '', degree: '', physicianType: '',
   vaTricare: false, pecosVerified: false,
-  licenseNumber: '', licenseState: '', licenseExp: '', specialty: '', taxonomy: '', physicianGroup: '',
+  licenseNumber: '', licenseState: '', licenseExp: '', specialty: NO_SPECIALTY, taxonomy: '', physicianGroup: '',
   vitalAlerts: '', orderNotif: '',
   branch: '', address: '', city: '', state: '', zip: '', phone: '', fax: '',
   officeVital: '', officeOrder: '', officePhysicianGroup: '', admissionCoordinator: '', additionalDetails: '',
