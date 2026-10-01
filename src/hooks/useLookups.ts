@@ -28,24 +28,26 @@ export function useLabelFor() {
   );
 }
 
-/** El useMemo va fuera del selector: zustand v5 compara la referencia del snapshot. */
-export function useCatalogOptions(name: CatalogName) {
-  const lookups = useCatalogsStore((state) => state.lookups);
-  return useMemo(() => toOptions(catalogFrom(lookups, name)), [lookups, name]);
-}
-
 /**
- * Antepone el status actual si el catálogo no lo trae: un <select> sin option
- * que matchee muestra la primera en silencio, y el siguiente click parecería un
- * no-op que en realidad cambia el status.
+ * Antepone el valor actual si el catálogo no lo trae (un status retirado, una
+ * specialty de texto libre de antes del dropdown): un <select> sin option que
+ * matchee muestra la primera en silencio, y el siguiente click parecería un
+ * no-op que en realidad cambia el valor.
+ *
+ * El useMemo va fuera del selector: zustand v5 compara la referencia del snapshot.
  */
-export function useStatusOptions(current?: RequestStatus) {
-  const options = useCatalogOptions('requestStatuses');
+export function useCatalogOptions(name: CatalogName, current?: string) {
+  const lookups = useCatalogsStore((state) => state.lookups);
   return useMemo(() => {
+    const options = toOptions(catalogFrom(lookups, name));
     if (!current) return options;
     if (options.some((option) => option.value === current)) return options;
     return [{ value: current, label: current }, ...options];
-  }, [options, current]);
+  }, [lookups, name, current]);
+}
+
+export function useStatusOptions(current?: RequestStatus) {
+  return useCatalogOptions('requestStatuses', current);
 }
 
 /**
