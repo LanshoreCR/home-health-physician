@@ -52,7 +52,8 @@ One row per request. Enumerated fields are `...Id` FKs into the lookup tables in
 | 14 | `licenseNumber` | `NVARCHAR(50)` | — | Optional. |
 | 15 | `licenseStateId` | `INT` FK → `USState` | — | Optional. |
 | 16 | `licenseExp` | `DATE` | — | Optional. |
-| 17 | `specialty` | `NVARCHAR(100)` | — | Optional free text. |
+| 17 | `specialtyId` | `INT` FK → `PhysicianSpecialty` | — | Optional. HCHB's specialty list (56 values, `*NONE SELECTED` included); code = label = the import value. |
+| 17b | `specialty` | `NVARCHAR(100)` | — | **Legacy.** Free text from before 2026-09-30 that matched no list value. Reads fall back to it; picking from the list clears it. |
 | 18 | `taxonomy` | `NVARCHAR(20)` | — | Optional free text. Goes to column Q (`Taxonomy Code`) of the HCHB import. Blank → `*NONE`. |
 | 19 | `physicianGroup` | `NVARCHAR(200)` | — | Optional free text. Blank → "None" on HCHB import. |
 | | **Notifications** | | | |

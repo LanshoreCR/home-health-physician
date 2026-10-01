@@ -138,6 +138,6 @@ function CatalogSelect({ catalog, onChange, ...rest }: {
   ref: DraftField['ref'];
   onChange: (value: string) => void;
 }) {
-  const options = useCatalogOptions(catalog);
+  const options = useCatalogOptions(catalog, rest.value);
   return <Select {...rest} options={options} onChange={(e) => onChange(e.target.value)} />;
 }
