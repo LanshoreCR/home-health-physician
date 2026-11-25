@@ -144,7 +144,6 @@ firesEmail   BIT NOT NULL   -- sends a response to requesterEmail
 | code | label | isExportable | firesEmail |
 |------|-------|:---:|:---:|
 | `newreq` | New Request | 1 | 0 |
-| `modify` | Modify Physician | 1 | 0 |
 | `approved` | Request Approved | 1 | 1 |
 | `duplicate` | Duplicate Phy/NPI | 0 | 0 |
 | `manual` | Manual Entry | 0 | 0 |
@@ -157,7 +156,7 @@ firesEmail   BIT NOT NULL   -- sends a response to requesterEmail
 
 Every request is in exactly one status; the reviewer changes it from the detail screen.
 
-- **Exportable statuses** (`isExportable = 1`) = `newreq`, `modify`, `approved` → the export batch pulls these **when `exportedAt IS NULL`**.
+- **Exportable statuses** (`isExportable = 1`) = `newreq`, `approved` → the export batch pulls these **when `exportedAt IS NULL`**.
 - **Email statuses** (`firesEmail = 1`) = `approved`, `denied` → app sends a response email to `requesterEmail`. DB just stores the status; email is app-side.
   - **Currently disabled** while the Microsoft Graph credentials do not exist: the send is commented out in `PhysicianRequestService.SetStatusAsync` and the banners in `RequestDetail`, so `setStatus` always answers `emailSent: false`. The DB flag stays as-is.
 

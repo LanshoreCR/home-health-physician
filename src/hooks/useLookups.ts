@@ -46,23 +46,23 @@ export function useCatalogOptions(name: CatalogName, current?: string) {
   }, [lookups, name, current]);
 }
 
+/**
+ * Update Completed (COMPLETED) no se elige a mano: solo lo pone el checkbox
+ * Loaded to Chart/Closed de la lista. Por eso no aparece ni en el dropdown del
+ * detalle ni en el filtro. La excepción es una request que ya está completed:
+ * su status actual se sigue mostrando para que el <select> no mienta.
+ */
 export function useStatusOptions(current?: RequestStatus) {
-  return useCatalogOptions('requestStatuses', current);
+  const options = useCatalogOptions('requestStatuses', current);
+  return useMemo(
+    () => options.filter((option) => option.value !== COMPLETED || option.value === current),
+    [options, current],
+  );
 }
 
-/**
- * Completed sale del tablero de trabajo, así que solo un reviewer puede pedirlo:
- * el API responde 403 si lo manda alguien más, y ofrecer la opción sería ofrecer
- * un filtro que falla.
- */
-export function useStatusFilterOptions(canSeeCompleted: boolean) {
+export function useStatusFilterOptions() {
   const options = useStatusOptions();
-  return useMemo(() => {
-    const visible = canSeeCompleted
-      ? options
-      : options.filter((option) => option.value !== COMPLETED);
-    return [{ value: 'all', label: 'All' }, ...visible];
-  }, [options, canSeeCompleted]);
+  return useMemo(() => [{ value: 'all', label: 'All' }, ...options], [options]);
 }
 
 export function useRequestedSourceFilterOptions() {

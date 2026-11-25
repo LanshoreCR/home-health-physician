@@ -14,7 +14,7 @@ interface StatusBadgeProps {
 
 /**
  * StatusBadge — the process-flow chip for a physician request.
- * status: newreq | modify | approved | duplicate | denied | imported | completed.
+ * status: newreq | approved | duplicate | denied | imported | completed.
  * size: sm (table rows) | md (detail header).
  */
 export function StatusBadge({ status = 'newreq', size = 'sm', label, style }: StatusBadgeProps) {

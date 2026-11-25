@@ -92,7 +92,6 @@ interface RequestsListProps {
   canCreate: boolean;
   canExport: boolean;
   canMarkLoaded: boolean;
-  canSeeCompleted: boolean;
 }
 
 /**
@@ -110,10 +109,10 @@ export function RequestsList({
   sort, onSortChange,
   branches,
   onOpen, onNew, onExport, onMarkLoaded, loadingId,
-  canCreate, canExport, canMarkLoaded, canSeeCompleted,
+  canCreate, canExport, canMarkLoaded,
 }: RequestsListProps) {
   const branchOptions = [{ value: ALL, label: 'All' }, ...branches.map((b) => ({ value: b, label: b }))];
-  const statusOptions = useStatusFilterOptions(canSeeCompleted);
+  const statusOptions = useStatusFilterOptions();
   const requestedSourceOptions = useRequestedSourceFilterOptions();
   const requesterOptions = useRequesterOptions(requests, requesterFilter);
   const visible = useVisibleRequests(requests, requesterFilter, sort);

@@ -22,8 +22,8 @@ export const CLOSABLE_STATUSES: RequestStatus[] = ['approved', 'denied', 'duplic
 
 /**
  * El final del camino: la request ya quedó cargada en el chart del paciente o
- * se cerró. Solo se llega desde CLOSABLE_STATUSES, y la lista la esconde salvo
- * que un reviewer filtre por ella.
+ * se cerró. Solo se llega desde CLOSABLE_STATUSES con el checkbox de la lista,
+ * que la esconde; no se ofrece en el dropdown de status ni en el filtro.
  */
 export const COMPLETED: RequestStatus = 'completed';
 

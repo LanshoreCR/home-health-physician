@@ -13,7 +13,6 @@ import { z } from 'zod';
 export const requestStatusSchema = z.enum([
   'newreq',
   'duplicate',
-  'modify',
   'denied',
   'approved',
   'imported',
