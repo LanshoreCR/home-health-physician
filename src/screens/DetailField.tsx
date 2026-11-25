@@ -6,9 +6,9 @@ import { useCatalogOptions, useLabelFor } from '../hooks/useLookups';
 import type { CatalogName } from '../store/catalogs';
 import type { RequestDraft } from '../data/types';
 import { FormField, TextArea } from './RequestFields';
-import { formatPhone, onlyAlphanumeric, type DraftKey } from './requestDraft';
+import { formatPhone, onlyAlphanumeric, toInitial, type DraftKey } from './requestDraft';
 
-type DetailFieldKind = 'text' | 'email' | 'mono' | 'alphanumeric' | 'phone' | 'date' | 'catalog' | 'yesNo' | 'longText';
+type DetailFieldKind = 'text' | 'initial' | 'email' | 'mono' | 'alphanumeric' | 'phone' | 'date' | 'catalog' | 'yesNo' | 'longText';
 type DraftField = ControllerRenderProps<RequestDraft, DraftKey>;
 
 const MONO_KINDS: DetailFieldKind[] = ['mono', 'alphanumeric', 'phone'];
@@ -87,6 +87,7 @@ function textChange(field: DraftField, kind: DetailFieldKind) {
   return (e: ChangeEvent<HTMLInputElement>) => {
     if (kind === 'phone') return field.onChange(formatPhone(e.target.value));
     if (kind === 'alphanumeric') return field.onChange(onlyAlphanumeric(e.target.value));
+    if (kind === 'initial') return field.onChange(toInitial(e.target.value));
     field.onChange(e.target.value);
   };
 }

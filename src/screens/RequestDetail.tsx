@@ -152,6 +152,7 @@ export function RequestDetail({
             <Card eyebrow="Physician">
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
                 <DetailField editing={editing} name="first" label="First name" required />
+                <DetailField editing={editing} name="middleInitial" label="Middle initial" kind="initial" />
                 <DetailField editing={editing} name="last" label="Last name" required />
                 <DetailField editing={editing} name="degree" label="Degree" kind="catalog" catalog="degrees" required />
                 <DetailField editing={editing} name="branch" label="Branch code" kind="mono" required />
