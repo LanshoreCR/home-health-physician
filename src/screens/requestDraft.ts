@@ -16,9 +16,14 @@ export const EMPTY_DRAFT: RequestDraft = {
   officeVital: '', officeOrder: '', officePhysicianGroup: '', admissionCoordinator: '', additionalDetails: '',
 };
 
+/**
+ * Máscara NNN-NNN-NNNN. No corta en 10 dígitos a propósito: si pegan
+ * 1-502-555-0101 los dígitos de más quedan a la vista y el schema marca
+ * "must be 10 digits", en vez de guardar en silencio un número corrido.
+ */
 export function formatPhone(raw: string): string {
-  const d = raw.replace(/[^0-9]/g, '').slice(0, 10);
-  const a = d.slice(0, 3), b = d.slice(3, 6), c = d.slice(6, 10);
+  const d = raw.replace(/[^0-9]/g, '').slice(0, 15);
+  const a = d.slice(0, 3), b = d.slice(3, 6), c = d.slice(6);
   if (d.length > 6) return a + '-' + b + '-' + c;
   if (d.length > 3) return a + '-' + b;
   return a;
