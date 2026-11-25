@@ -42,6 +42,15 @@ const COLS = [
 ].join(' ');
 const COL_GAP = '12px';
 
+/**
+ * La tabla scrollea dentro de su propia caja para que el header sticky tenga un
+ * contenedor que de verdad se mueva: con el scroll horizontal (< ~1340px) un
+ * ancestro con overflow le roba el sticky a la página. Header y filas comparten
+ * el mismo scroll, así que quedan alineados al moverse de lado. El tope deja la
+ * caja a una pantalla de alto bajo el AppBar, con un piso para ventanas bajas.
+ */
+const TABLE_MAX_H = 'max(320px, calc(100dvh - var(--appbar-h) - 56px))';
+
 const LOADED_LABEL = 'Loaded to Chart/Closed';
 
 const breakAfterSlash = (text: string) => text.replace('/', '/\u200B');
@@ -159,9 +168,9 @@ export function RequestsList({
           <FilterSelect label="Requested source" value={requestedSourceFilter} options={requestedSourceOptions} onChange={onRequestedSourceFilterChange} />
         </div>
 
-        <div style={{ overflowX: 'auto' }}>
-          <div style={{ background: 'var(--surface-card)', border: '1px solid var(--border-card)', borderRadius: 'var(--radius-xl)', overflow: 'hidden', minWidth: 'min-content' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: COLS, gap: COL_GAP, padding: '14px 24px', background: 'var(--surface-subtle)', borderBottom: '1px solid var(--border-card)', fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 600, letterSpacing: 'var(--ls-eyebrow)', textTransform: 'uppercase', color: 'var(--text-faint)' }}>
+        <div style={{ background: 'var(--surface-card)', border: '1px solid var(--border-card)', borderRadius: 'var(--radius-xl)', overflow: 'auto', maxHeight: TABLE_MAX_H }}>
+          <div style={{ minWidth: 'min-content' }}>
+            <div style={{ position: 'sticky', top: 0, zIndex: 1, display: 'grid', gridTemplateColumns: COLS, gap: COL_GAP, padding: '14px 24px', background: 'var(--surface-subtle)', borderBottom: '1px solid var(--border-card)', fontFamily: 'var(--font-sans)', fontSize: '11px', fontWeight: 600, letterSpacing: 'var(--ls-eyebrow)', textTransform: 'uppercase', color: 'var(--text-faint)' }}>
               <span style={HEADER_CELL}>{breakAfterSlash(LOADED_LABEL)}</span>
               {COLUMNS.map((column) => (
                 <SortHeader
