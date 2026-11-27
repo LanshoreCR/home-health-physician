@@ -6,6 +6,7 @@ import { Field } from '../ui/Field';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { Checkbox } from '../ui/Checkbox';
+import { Combobox } from '../ui/Combobox';
 import { Skeleton } from '../ui/Skeleton';
 import { useLookups } from '../hooks/useLookups';
 import { toOptions } from '../api/schemas';
@@ -174,8 +175,8 @@ export function RequestForm({ submitting, error, fieldErrors, onCancel, onSubmit
               <FormField name="specialty" label="Specialty">
                 {(field, invalid) => <Select {...field} options={toOptions(lookups.specialties)} invalid={invalid} />}
               </FormField>
-              <FormField name="taxonomy" label="Taxonomy" hint="Defaults to *NONE on import if blank">
-                {(field, invalid) => <Input {...field} invalid={invalid} />}
+              <FormField name="taxonomy" label="Taxonomy code" hint="Defaults to *NONE on import if blank">
+                {(field, invalid) => <Combobox {...field} options={toOptions(lookups.taxonomyCodes)} invalid={invalid} />}
               </FormField>
               <FormField name="physicianGroup" label="Physician group" hint="Defaults to *NONE on import if blank">
                 {(field, invalid) => <Input {...field} onChange={mirrorTo(field, 'officePhysicianGroup')} invalid={invalid} />}

@@ -164,7 +164,7 @@ export function RequestDetail({
                 <DetailField editing={editing} name="licenseState" label="License state" kind="catalog" catalog="states" />
                 <DetailField editing={editing} name="licenseExp" label="License expiration" kind="date" />
                 <DetailField editing={editing} name="specialty" label="Specialty" kind="catalog" catalog="specialties" />
-                <DetailField editing={editing} name="taxonomy" label="Taxonomy" />
+                <DetailField editing={editing} name="taxonomy" label="Taxonomy code" kind="search" catalog="taxonomyCodes" />
                 <DetailField editing={editing} name="physicianGroup" label="Physician group" />
               </div>
             </Card>
