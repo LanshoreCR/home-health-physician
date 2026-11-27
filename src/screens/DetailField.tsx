@@ -2,13 +2,15 @@ import { type ChangeEvent, type CSSProperties } from 'react';
 import { useWatch, type ControllerRenderProps } from 'react-hook-form';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
+import { Combobox } from '../ui/Combobox';
 import { useCatalogOptions, useLabelFor } from '../hooks/useLookups';
 import type { CatalogName } from '../store/catalogs';
 import type { RequestDraft } from '../data/types';
 import { FormField, TextArea } from './RequestFields';
 import { formatPhone, onlyAlphanumeric, toInitial, type DraftKey } from './requestDraft';
 
-type DetailFieldKind = 'text' | 'initial' | 'email' | 'mono' | 'alphanumeric' | 'phone' | 'date' | 'catalog' | 'yesNo' | 'longText';
+/** 'search' es un catálogo demasiado largo para un <select>: se filtra escribiendo. */
+type DetailFieldKind = 'text' | 'initial' | 'email' | 'mono' | 'alphanumeric' | 'phone' | 'date' | 'catalog' | 'search' | 'yesNo' | 'longText';
 type DraftField = ControllerRenderProps<RequestDraft, DraftKey>;
 
 const MONO_KINDS: DetailFieldKind[] = ['mono', 'alphanumeric', 'phone'];
@@ -115,6 +117,9 @@ function EditControl({ field, invalid, kind, catalog }: {
   if (kind === 'catalog' && catalog) {
     return <CatalogSelect {...common} catalog={catalog} value={text} invalid={invalid} onChange={field.onChange} />;
   }
+  if (kind === 'search' && catalog) {
+    return <CatalogCombobox {...common} catalog={catalog} value={text} invalid={invalid} onChange={field.onChange} />;
+  }
   if (kind === 'longText') {
     return <TextArea {...common} value={text} onChange={(e) => field.onChange(e.target.value)} />;
   }
@@ -141,4 +146,18 @@ function CatalogSelect({ catalog, onChange, ...rest }: {
 }) {
   const options = useCatalogOptions(catalog, rest.value);
   return <Select {...rest} options={options} onChange={(e) => onChange(e.target.value)} />;
+}
+
+/** El valor legado (texto libre de antes del catálogo) llega como opción vía useCatalogOptions. */
+function CatalogCombobox({ catalog, ...rest }: {
+  catalog: CatalogName;
+  name: string;
+  value: string;
+  invalid: boolean;
+  onBlur: () => void;
+  ref: DraftField['ref'];
+  onChange: (value: string) => void;
+}) {
+  const options = useCatalogOptions(catalog, rest.value);
+  return <Combobox {...rest} options={options} />;
 }

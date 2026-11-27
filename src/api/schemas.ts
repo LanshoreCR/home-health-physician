@@ -103,6 +103,8 @@ export const lookupsSchema = z.object({
   requestedSources: z.array(lookupItemSchema),
   /** Con default: si el front sale antes que el API, el form sigue cargando y solo el dropdown queda vacío. */
   specialties: z.array(lookupItemSchema).default([]),
+  /** Mismo default que specialties: un API anterior no la manda todavía. */
+  taxonomyCodes: z.array(lookupItemSchema).default([]),
 });
 
 export const currentUserSchema = z.object({

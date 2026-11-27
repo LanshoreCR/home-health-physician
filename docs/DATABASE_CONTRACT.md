@@ -54,7 +54,8 @@ One row per request. Enumerated fields are `...Id` FKs into the lookup tables in
 | 16 | `licenseExp` | `DATE` | — | Optional. |
 | 17 | `specialtyId` | `INT` FK → `PhysicianSpecialty` | — | Optional. HCHB's specialty list (56 values, `*NONE SELECTED` included); code = label = the import value. |
 | 17b | `specialty` | `NVARCHAR(100)` | — | **Legacy.** Free text from before 2026-09-30 that matched no list value. Reads fall back to it; picking from the list clears it. |
-| 18 | `taxonomy` | `NVARCHAR(20)` | — | Optional free text. Goes to column Q (`Taxonomy Code`) of the HCHB import. Blank → `*NONE`. |
+| 18 | `taxonomyId` | `INT` FK → `TaxonomyCode` | — | Optional. HCHB's NUCC taxonomy list (828 values); label = `code - description`. Goes to column Q (`Taxonomy Code`) of the HCHB import. Blank → `*NONE`. |
+| 18b | `taxonomy` | `NVARCHAR(20)` | — | **Legacy.** Free text from before 2026-11-27 that matched no list value. Reads fall back to it; picking from the list clears it. |
 | 19 | `physicianGroup` | `NVARCHAR(200)` | — | Optional free text. Blank → "None" on HCHB import. |
 | | **Notifications** | | | |
 | 20 | `vitalAlertMethodId` | `INT` FK → `VitalAlertMethod` | ✅ | |
