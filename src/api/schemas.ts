@@ -129,6 +129,18 @@ const optional = (max: number) =>
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
+/**
+ * Espejo de [TenDigitPhone] del backend: cuentan solo los dígitos (guiones,
+ * espacios, paréntesis y puntos son formato) y tienen que ser exactamente 10.
+ * El vacío lo reporta min(1), así el campo muestra un solo error.
+ */
+const PHONE_SEPARATORS = /[\s\-().]/g;
+const phone = (label: string) =>
+  required(20).refine(
+    (v) => v === '' || /^\d{10}$/.test(v.replace(PHONE_SEPARATORS, '')),
+    `${label} must be 10 digits`,
+  );
+
 /** Tope propio del cliente para texto libre: más estricto que el DataAnnotation del backend. */
 const TEXT_MAX = 50;
 
@@ -178,8 +190,8 @@ export const saveRequestSchema = z.object({
   city: required(TEXT_MAX),
   state: required(20),
   zip: required(10),
-  phone: required(12),
-  fax: required(12),
+  phone: phone('Phone'),
+  fax: phone('Fax'),
   officeVital: optional(20),
   officeOrder: optional(20),
   officePhysicianGroup: optional(TEXT_MAX),
