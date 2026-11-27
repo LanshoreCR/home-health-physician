@@ -248,7 +248,6 @@ export function App() {
           canCreate={can.canCreate}
           canExport={can.canExport}
           canMarkLoaded={can.canMarkLoaded}
-          canSeeCompleted={can.canSeeCompleted}
         />
       )}
 
