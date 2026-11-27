@@ -96,8 +96,17 @@ body {
   gap: 16px 18px;
 }
 
+/* First / MI / Last en una fila dentro del form-grid de dos columnas. */
+.name-row {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 1fr 72px 1fr;
+  gap: 16px 18px;
+}
+
 @media (max-width: 720px) {
-  .form-grid {
+  .form-grid,
+  .name-row {
     grid-template-columns: 1fr;
   }
 }

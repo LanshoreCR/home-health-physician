@@ -11,7 +11,7 @@ import { useLookups } from '../hooks/useLookups';
 import { toOptions } from '../api/schemas';
 import type { RequestDraft } from '../data/types';
 import { FormField, FormFooter, TextArea } from './RequestFields';
-import { EMPTY_DRAFT, formatPhone, onlyAlphanumeric, useRequestForm, type DraftKey } from './requestDraft';
+import { EMPTY_DRAFT, formatPhone, onlyAlphanumeric, toInitial, useRequestForm, type DraftKey } from './requestDraft';
 
 type OfficeKey = 'officeVital' | 'officeOrder' | 'officePhysicianGroup';
 
@@ -67,6 +67,9 @@ export function RequestForm({ submitting, error, fieldErrors, onCancel, onSubmit
   const alphanumericChange = <K extends DraftKey>(field: ControllerRenderProps<RequestDraft, K>) =>
     (e: ChangeEvent<HTMLInputElement>) => field.onChange(onlyAlphanumeric(e.target.value));
 
+  const initialChange = <K extends DraftKey>(field: ControllerRenderProps<RequestDraft, K>) =>
+    (e: ChangeEvent<HTMLInputElement>) => field.onChange(toInitial(e.target.value));
+
   /** Un refresh de fondo que falla no debe blanquear un form que ya tiene catálogos. */
   if (lookupsError && !lookups) {
     return (
@@ -111,12 +114,17 @@ export function RequestForm({ submitting, error, fieldErrors, onCancel, onSubmit
 
           <Card step={2} title="Physician" style={{ marginBottom: 'var(--section-gap)' }}>
             <div className="form-grid">
-              <FormField name="first" label="First name" required>
-                {(field, invalid) => <Input {...field} invalid={invalid} />}
-              </FormField>
-              <FormField name="last" label="Last name" required>
-                {(field, invalid) => <Input {...field} invalid={invalid} />}
-              </FormField>
+              <div className="name-row">
+                <FormField name="first" label="First name" required>
+                  {(field, invalid) => <Input {...field} invalid={invalid} />}
+                </FormField>
+                <FormField name="middleInitial" label="MI">
+                  {(field, invalid) => <Input {...field} onChange={initialChange(field)} maxLength={1} invalid={invalid} />}
+                </FormField>
+                <FormField name="last" label="Last name" required>
+                  {(field, invalid) => <Input {...field} invalid={invalid} />}
+                </FormField>
+              </div>
               <FormField name="degree" label="Degree" required hint="MD · DO · DPM · NP · PA">
                 {(field, invalid) => <Select {...field} options={toOptions(lookups.degrees)} invalid={invalid} />}
               </FormField>

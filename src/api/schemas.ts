@@ -56,6 +56,8 @@ export const physicianRequestSchema = z.object({
   requesterEmail: z.string(),
   requestedSource: z.string(),
   first: z.string(),
+  /** Default '' para tolerar una API que todavía no manda el campo. */
+  middleInitial: z.string().default(''),
   last: z.string(),
   npi: z.string(),
   degree: z.string(),
@@ -165,6 +167,11 @@ export const saveRequestSchema = z.object({
   requesterEmail: required(256).pipe(z.email('Enter a valid email address')),
   requestedSource: required(20),
   first: required(TEXT_MAX),
+  middleInitial: z
+    .string()
+    .trim()
+    .regex(/^[A-Za-z]?$/, 'Middle initial must be a single letter')
+    .transform(emptyToNull),
   last: required(TEXT_MAX),
   npi: z.string().trim().regex(/^\d{10}$/, 'NPI must be 10 digits'),
   degree: required(20),

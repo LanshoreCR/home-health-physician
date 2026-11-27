@@ -8,7 +8,7 @@ export type DraftKey = FieldPath<RequestDraft>;
 
 export const EMPTY_DRAFT: RequestDraft = {
   patientName: '', mrn: '', patientStatus: '', requesterName: '', requesterEmail: '', requestedSource: '',
-  first: '', last: '', npi: '', degree: '', physicianType: '',
+  first: '', middleInitial: '', last: '', npi: '', degree: '', physicianType: '',
   vaTricare: false, pecosVerified: false,
   licenseNumber: '', licenseState: '', licenseExp: '', specialty: NO_SPECIALTY, taxonomy: '', physicianGroup: '',
   vitalAlerts: '', orderNotif: '',
@@ -31,6 +31,11 @@ export function formatPhone(raw: string): string {
 
 export function onlyAlphanumeric(raw: string): string {
   return raw.replace(/[^A-Za-z0-9]/g, '');
+}
+
+/** Middle initial: una sola letra A–Z en mayúscula (columna MI del import de HCHB). */
+export function toInitial(raw: string): string {
+  return raw.replace(/[^A-Za-z]/g, '').slice(0, 1).toUpperCase();
 }
 
 /**
